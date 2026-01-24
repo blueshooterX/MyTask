@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <?!= include('css'); ?>
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <div class="header-left">
+                <h1>MyTask</h1>
+                <div class="filter-group">
+                    <select id="filterGroup">
+                        <option value="">全グループ</option>
+                    </select>
+                    <select id="filterPriority">
+                        <option value="">全優先度</option>
+                        <option value="高">高</option>
+                        <option value="中">中</option>
+                        <option value="低">低</option>
+                    </select>
+                </div>
+            </div>
+            <div class="header-right">
+                <button id="importTasksBtn" class="btn secondary">Google Task 抽出</button>
+                <button id="toggleDoneBtn" class="btn secondary">完了: 非表示</button>
+                <button id="toggleDetailBtn" class="btn secondary">詳細表示</button>
+                <button id="addTaskBtn" class="btn primary">新規タスク追加</button>
+            </div>
+        </header>
+
+        <main>
+            <div id="kanban-container" class="kanban-grid">
+                <div class="kanban-column" data-status="未着手">
+                    <div class="column-header">
+                        <h2>未着手 <span class="count">0</span></h2>
+                        <select class="column-sort" data-status="未着手">
+                            <option value="default">表示順</option>
+                            <option value="priority">優先度</option>
+                            <option value="group">グループ</option>
+                            <option value="dueDate">期限</option>
+                        </select>
+                    </div>
+                    <div class="task-list" id="backlog"></div>
+                </div>
+                <div class="resizer"></div>
+
+                <div class="kanban-column" data-status="実施中">
+                    <div class="column-header">
+                        <h2>実施中 <span class="count">0</span></h2>
+                        <select class="column-sort" data-status="実施中">
+                            <option value="default">表示順</option>
+                            <option value="priority">優先度</option>
+                            <option value="group">グループ</option>
+                            <option value="dueDate">期限</option>
+                        </select>
+                    </div>
+                    <div class="task-list" id="wip"></div>
+                </div>
+                <div class="resizer"></div>
+
+                <div class="kanban-column" data-status="保留">
+                    <div class="column-header">
+                        <h2>保留 <span class="count">0</span></h2>
+                        <select class="column-sort" data-status="保留">
+                            <option value="default">表示順</option>
+                            <option value="priority">優先度</option>
+                            <option value="group">グループ</option>
+                            <option value="dueDate">期限</option>
+                        </select>
+                    </div>
+                    <div class="task-list" id="pending"></div>
+                </div>
+                <div class="resizer"></div>
+
+                <div class="kanban-column" data-status="完了">
+                    <div class="column-header">
+                        <h2>完了 <span class="count">0</span></h2>
+                        <select class="column-sort" data-status="完了">
+                            <option value="default">表示順</option>
+                            <option value="priority">優先度</option>
+                            <option value="group">グループ</option>
+                            <option value="dueDate">期限</option>
+                        </select>
+                    </div>
+                    <div class="task-list" id="done"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modals -->
+        <?!= include('modal'); ?>
+
+        <div id="loading-overlay" class="overlay">
+            <div class="loader"></div>
+        </div>
+    </div>
+
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+    <!-- Scripts -->
+    <?!= include('js-ui-utils'); ?>
+    <?!= include('js-rich-text-editor'); ?>
+    <?!= include('js-kanban-view'); ?>
+    <?!= include('js-task-modal'); ?>
+    <?!= include('js-main'); ?>
+</body>
+
+</html>

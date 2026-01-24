@@ -1,0 +1,61 @@
+<script>
+    /**
+     * Rich Text Editor Component (Reusable)
+     */
+
+    const RichTextEditor = {
+        focusedRange: null,
+
+        init: function (editorId, toolbarId) {
+            const editor = document.getElementById(editorId);
+
+            editor.addEventListener('blur', () => {
+                const sel = window.getSelection();
+                if (sel.rangeCount > 0) {
+                    this.focusedRange = sel.getRangeAt(0);
+                }
+            });
+
+            const buttons = document.querySelectorAll(`#${toolbarId} button[data-cmd]`);
+            buttons.forEach(btn => {
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    this.restoreFocus(editor);
+                    const cmd = btn.dataset.cmd;
+                    document.execCommand(cmd, false, null);
+                };
+            });
+        },
+
+        restoreFocus: function (editorElement) {
+            editorElement.focus();
+            if (this.focusedRange) {
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(this.focusedRange);
+            }
+        },
+
+        applyColor: function (editorId, color) {
+            const editor = document.getElementById(editorId);
+            this.restoreFocus(editor);
+            document.execCommand('foreColor', false, color);
+        },
+
+        getHtml: function (editorId) {
+            return document.getElementById(editorId).innerHTML;
+        },
+
+        getRawText: function (editorId) {
+            return document.getElementById(editorId).innerText;
+        },
+
+        setHtml: function (editorId, html) {
+            document.getElementById(editorId).innerHTML = html;
+        },
+
+        clear: function (editorId) {
+            document.getElementById(editorId).innerHTML = '';
+        }
+    };
+</script>

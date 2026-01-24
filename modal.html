@@ -1,0 +1,254 @@
+<!-- Task Editor Modal -->
+<div id="taskModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">新規タスク追加</h2>
+            <span class="close-modal">&times;</span>
+        </div>
+        <form id="taskForm">
+            <input type="hidden" id="taskId">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="taskGroup">タスクグループ</label>
+                    <input type="text" id="taskGroupInput" list="groupOptions" placeholder="グループ名を入力または選択">
+                    <datalist id="groupOptions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label for="taskPriorityInput">優先度</label>
+                    <select id="taskPriorityInput">
+                        <option value="高">高</option>
+                        <option value="中" selected>中</option>
+                        <option value="低">低</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="taskTitleInput">タスクタイトル</label>
+                <input type="text" id="taskTitleInput" required placeholder="タイトルを入力">
+            </div>
+
+            <div class="form-group">
+                <label>タスク内容 (リッチテキスト)</label>
+                <div class="rich-editor-container">
+                    <div class="toolbar" id="editorToolbar">
+                        <button type="button" data-cmd="bold" title="太字"><b>B</b></button>
+                        <button type="button" data-cmd="strikethrough" title="取り消し線"><s>S</s></button>
+                        <div class="color-picker">
+                            <button type="button" class="color-btn" id="colorBtn">A<span
+                                    class="color-bar"></span></button>
+                            <div class="color-menu" id="colorMenu">
+                                <div class="color-swatch" style="background:#000000" data-color="#000000"></div>
+                                <div class="color-swatch" style="background:#ef4444" data-color="#ef4444"></div>
+                                <div class="color-swatch" style="background:#3b82f6" data-color="#3b82f6"></div>
+                                <div class="color-swatch" style="background:#22c55e" data-color="#22c55e"></div>
+                                <div class="color-swatch" style="background:#f59e0b" data-color="#f59e0b"></div>
+                                <div class="color-swatch" style="background:#a855f7" data-color="#a855f7"></div>
+                                <div class="color-swatch" style="background:#ec4899" data-color="#ec4899"></div>
+                                <div class="color-swatch" style="background:#6b7280" data-color="#6b7280"></div>
+                            </div>
+                        </div>
+                        <button type="button" data-cmd="insertUnorderedList" title="箇条書き">•</button>
+                    </div>
+                    <div id="editor" contenteditable="true"></div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="taskDueDateInput">期限</label>
+                    <input type="date" id="taskDueDateInput">
+                </div>
+                <div class="form-group">
+                    <label for="taskStatusInput">ステータス</label>
+                    <select id="taskStatusInput">
+                        <option value="未着手">未着手</option>
+                        <option value="実施中">実施中</option>
+                        <option value="保留">保留</option>
+                        <option value="完了">完了</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" id="deleteTaskBtn" class="btn secondary danger" style="display:none">削除</button>
+                <div style="flex:1"></div>
+                <button type="button" class="btn secondary cancel-btn">キャンセル</button>
+                <button type="submit" class="btn primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        visibility: hidden;
+        opacity: 0;
+        transition: all 0.3s;
+    }
+
+    .modal-overlay.show {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .modal-content {
+        background: white;
+        width: 90%;
+        max-width: 600px;
+        border-radius: var(--radius);
+        padding: 2rem;
+        box-shadow: var(--shadow-md);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .close-modal {
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text-muted);
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+        color: var(--text-main);
+    }
+
+    .form-row {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .form-row .form-group {
+        flex: 1;
+    }
+
+    /* リッチエディタ */
+    .rich-editor-container {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .toolbar {
+        background: #f1f5f9;
+        border-bottom: 1px solid var(--border);
+        padding: 0.5rem;
+        display: flex;
+        gap: 0.25rem;
+        align-items: center;
+    }
+
+    .toolbar button {
+        width: 32px;
+        height: 32px;
+        border: 1px solid transparent;
+        background: transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .toolbar button:hover {
+        background: #e2e8f0;
+        border-color: var(--border);
+    }
+
+    #editor {
+        min-height: 150px;
+        max-height: 300px;
+        padding: 1rem;
+        outline: none;
+        overflow-y: auto;
+    }
+
+    /* カラーピッカー */
+    .color-picker {
+        position: relative;
+    }
+
+    .color-btn {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .color-bar {
+        width: 16px;
+        height: 3px;
+        background: black;
+        margin-top: -2px;
+    }
+
+    .color-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: white;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.5rem;
+        display: none;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        z-index: 10;
+    }
+
+    .color-menu.show {
+        display: grid;
+    }
+
+    .color-swatch {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .color-swatch:hover {
+        transform: scale(1.1);
+    }
+
+    .modal-footer {
+        display: flex;
+        gap: 1rem;
+        padding-top: 1rem;
+    }
+
+    .btn.danger {
+        color: #ef4444;
+        border-color: #fecaca;
+    }
+
+    .btn.danger:hover {
+        background-color: #fef2f2;
+    }
+</style>

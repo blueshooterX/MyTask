@@ -1,0 +1,108 @@
+<script>
+    /**
+     * Task Modal Logic
+     */
+
+    function setupTaskModal() {
+        // Modal events
+        const modal = document.getElementById('taskModal');
+        const closeModal = () => modal.classList.remove('show');
+
+        document.querySelector('.close-modal').onclick = closeModal;
+        document.querySelector('.cancel-btn').onclick = closeModal;
+
+        document.getElementById('taskForm').onsubmit = (e) => {
+            e.preventDefault();
+            saveCurrentTask();
+        };
+
+        document.getElementById('deleteTaskBtn').onclick = () => {
+            if (confirm('このタスクを削除しますか？')) {
+                deleteCurrentTask();
+            }
+        };
+
+        // Color Picker Logic (integrated with RichTextEditor)
+        const colorBtn = document.getElementById('colorBtn');
+        const colorMenu = document.getElementById('colorMenu');
+
+        colorBtn.onclick = (e) => {
+            e.preventDefault();
+            colorMenu.classList.toggle('show');
+        };
+
+        document.querySelectorAll('.color-swatch').forEach(swatch => {
+            swatch.onclick = (e) => {
+                const color = swatch.dataset.color;
+                RichTextEditor.applyColor('editor', color);
+                colorMenu.classList.remove('show');
+                colorBtn.querySelector('.color-bar').style.background = color;
+            };
+        });
+
+        window.addEventListener('click', (e) => {
+            if (!colorBtn.contains(e.target)) colorMenu.classList.remove('show');
+        });
+    }
+
+    function openModal(task = null) {
+        const form = document.getElementById('taskForm');
+        const modal = document.getElementById('taskModal');
+        const title = document.getElementById('modalTitle');
+
+        form.reset();
+        RichTextEditor.clear('editor');
+        document.getElementById('deleteTaskBtn').style.display = task ? 'block' : 'none';
+
+        if (task) {
+            title.innerText = 'タスク編集';
+            document.getElementById('taskId').value = task.id;
+            document.getElementById('taskGroupInput').value = task.group;
+            document.getElementById('taskPriorityInput').value = task.priority;
+            document.getElementById('taskTitleInput').value = task.title;
+            RichTextEditor.setHtml('editor', task.contentHtml);
+            document.getElementById('taskDueDateInput').value = task.dueDate ? task.dueDate.split('T')[0] : '';
+            document.getElementById('taskStatusInput').value = task.status;
+        } else {
+            title.innerText = '新規タスク追加';
+            document.getElementById('taskId').value = '';
+        }
+
+        modal.classList.add('show');
+    }
+
+    function saveCurrentTask() {
+        const id = document.getElementById('taskId').value;
+        const task = {
+            id: id,
+            group: document.getElementById('taskGroupInput').value,
+            priority: document.getElementById('taskPriorityInput').value,
+            title: document.getElementById('taskTitleInput').value,
+            contentHtml: RichTextEditor.getHtml('editor'),
+            contentRaw: RichTextEditor.getRawText('editor'),
+            dueDate: document.getElementById('taskDueDateInput').value,
+            status: document.getElementById('taskStatusInput').value
+        };
+
+        showLoading('loading-overlay', true);
+        google.script.run
+            .withSuccessHandler(() => {
+                document.getElementById('taskModal').classList.remove('show');
+                refreshData();
+            })
+            .withFailureHandler(handleError)
+            .saveTask(task);
+    }
+
+    function deleteCurrentTask() {
+        const id = document.getElementById('taskId').value;
+        showLoading('loading-overlay', true);
+        google.script.run
+            .withSuccessHandler(() => {
+                document.getElementById('taskModal').classList.remove('show');
+                refreshData();
+            })
+            .withFailureHandler(handleError)
+            .deleteTask(id);
+    }
+</script>

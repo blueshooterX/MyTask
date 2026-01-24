@@ -1,0 +1,74 @@
+<script>
+    /**
+     * UI Utilities (Reusable)
+     */
+
+    function generateColorFromHash(string) {
+        if (!string) return '#94a3b8'; // default slate color
+        const colors = [
+            '#6366f1', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#14b8a6',
+            '#f97316', '#06b6d4', '#84cc16', '#d946ef', '#0ea5e9', '#22c55e', '#eab308', '#64748b'
+        ];
+
+        let hash = 0;
+        for (let i = 0; i < string.length; i++) {
+            hash = string.charCodeAt(i) + ((hash << 5) - hash);
+            hash = hash & hash;
+        }
+
+        const index = Math.abs(hash) % colors.length;
+        return colors[index];
+    }
+
+    function showLoading(elementId, show) {
+        const el = document.getElementById(elementId);
+        if (el) {
+            el.classList.toggle('show', show);
+        }
+    }
+
+    /**
+     * Generic Column Resizer
+     * @param {string} resizerSelector CSS selector for resizer elements
+     * @param {string} columnSelector CSS selector for column elements (relative to resizer)
+     * @param {HTMLElement} containerElement Container element
+     */
+    function setupColumnResizer(resizerSelector, columnSelector, containerElement) {
+        const resizers = document.querySelectorAll(resizerSelector);
+        const columns = document.querySelectorAll(columnSelector);
+        if (!containerElement) return;
+
+        // Initial width balance
+        const totalGap = (resizers.length * 8) + 40;
+        const initialWidth = (containerElement.offsetWidth - totalGap) / columns.length;
+        columns.forEach(col => {
+            if (initialWidth > 200) col.style.width = initialWidth + 'px';
+        });
+
+        resizers.forEach(resizer => {
+            let startX, startWidth;
+            const column = resizer.previousElementSibling;
+
+            resizer.addEventListener('mousedown', e => {
+                startX = e.pageX;
+                startWidth = column.offsetWidth;
+
+                const onMouseMove = (moveEvent) => {
+                    const width = startWidth + (moveEvent.pageX - startX);
+                    if (width > 100) {
+                        column.style.flex = '0 0 auto'; // Disable flex to allow manual width
+                        column.style.width = width + 'px';
+                    }
+                };
+                const onMouseUp = () => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    resizer.classList.remove('resizing');
+                };
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+                resizer.classList.add('resizing');
+            });
+        });
+    }
+</script>

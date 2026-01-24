@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+<!-- --- START css.html --- -->
+<style>
+    :root {
+        --primary: #4F46E5;
+        --primary-hover: #4338CA;
+        --bg-main: #F8FAFC;
+        --bg-card: #FFFFFF;
+        --text-main: #1E293B;
+        --text-muted: #64748B;
+        --border: #E2E8F0;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --radius: 12px;
+
+        --priority-high: #FEE2E2;
+        --priority-high-text: #EF4444;
+        --priority-middle: #FEF3C7;
+        --priority-middle-text: #F59E0B;
+        --priority-low: #F0F9FF;
+        --priority-low-text: #3B82F6;
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        line-height: 1.5;
+        overflow-x: hidden;
+    }
+
+    h1,
+    h2,
+    .outfit {
+        font-family: 'Outfit', sans-serif;
+    }
+
+    #app {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        background: white;
+        border-bottom: 1px solid var(--border);
+        z-index: 10;
+        min-height: 48px;
+        height: auto;
+        flex-shrink: 0;
+        flex-wrap: wrap;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    header h1 {
+        font-size: 1.2rem;
+        color: var(--primary);
+        font-weight: 700;
+    }
+
+    .filter-group {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    select,
+    input[type="text"],
+    textarea {
+        padding: 0.4rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 0.85rem;
+        outline: none;
+        transition: border-color 0.2s;
+    }
+
+    select:focus {
+        border-color: var(--primary);
+    }
+
+    .header-right {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn {
+        padding: 0.4rem 1rem;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        font-size: 0.85rem;
+    }
+
+    .btn.primary {
+        background-color: var(--primary);
+        color: white;
+    }
+
+    .btn.primary:hover {
+        background-color: var(--primary-hover);
+    }
+
+    .btn.secondary {
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        border: 1px solid var(--border);
+    }
+
+    .btn.secondary:hover {
+        background-color: var(--border);
+    }
+
+    main {
+        flex: 1;
+        padding: 0.5rem;
+        overflow: hidden;
+        /* Scroll handled by columns/grid */
+        display: flex;
+        flex-direction: column;
+    }
+
+    .kanban-grid {
+        display: flex;
+        flex-direction: row;
+        gap: 0;
+        height: 100%;
+        width: 100%;
+    }
+
+    .kanban-column {
+        background: #F1F5F9;
+        border-radius: var(--radius);
+        /* Flex grow 1 to fill space, shrink 1, base 0 for equal distribution or resizing */
+        flex: 1 1 0;
+        min-width: 250px;
+        display: flex;
+        flex-direction: column;
+        max-height: 100%;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        margin-right: 2px;
+        transition: flex-grow 0.3s ease;
+    }
+
+    .kanban-column.hidden {
+        flex: 0 0 0 !important;
+        min-width: 0 !important;
+        width: 0 !important;
+        overflow: hidden;
+        border: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .kanban-column.hidden+.resizer {
+        display: none;
+    }
+
+    .column-header {
+        padding: 0.3rem 0.6rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+        height: 32px;
+    }
+
+    .column-header h2 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .column-header .count {
+        background: var(--border);
+        padding: 0.05rem 0.4rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+
+    .column-sort {
+        font-size: 0.7rem;
+        padding: 0.1rem 0.3rem;
+    }
+
+    .resizer {
+        width: 4px;
+        /* Thinner resizer */
+        cursor: col-resize;
+        flex-shrink: 0;
+        z-index: 5;
+        background: transparent;
+    }
+
+    .resizer:hover {
+        background: rgba(79, 70, 229, 0.3);
+    }
+
+    .task-list {
+        flex: 1;
+        padding: 0.4rem;
+        overflow-y: auto;
+        min-height: 0;
+        /* Crucial for scrolling inside flex column */
+
+        /* Grid Layout for Multi-Column Tasks */
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        grid-auto-rows: min-content;
+        /* Each row adjusts to content height */
+        gap: 0.4rem;
+        align-content: start;
+    }
+
+    /* Task Card */
+    .task-card {
+        background: var(--bg-card);
+        border-radius: 6px;
+        padding: 0.4rem 0.6rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        cursor: grab;
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s, box-shadow 0.2s;
+        flex-shrink: 0;
+        /* Prevent squashing in flex containers */
+        height: auto;
+        /* Ensure height adjusts to content */
+    }
+
+    .task-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 3px;
+        height: 100%;
+    }
+
+    .task-card.priority-high::before {
+        background: #ef4444;
+    }
+
+    .task-card.priority-middle::before {
+        background: #f59e0b;
+    }
+
+    .task-card.priority-low::before {
+        background: #22c55e;
+    }
+
+    .task-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+        border-color: var(--primary);
+    }
+
+    /* Card Header Row: Group, Title, Date */
+    .card-header-row {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 0.1rem;
+        width: 100%;
+    }
+
+    .card-label {
+        cursor: pointer;
+        font-size: 1rem;
+        color: #ddd;
+        /* Inactive gray */
+        display: flex;
+        align-items: center;
+        transition: transform 0.1s;
+    }
+
+    .card-label.active {
+        color: inherit;
+        /* Use emoji color */
+        opacity: 1;
+    }
+
+    .card-label:hover {
+        transform: scale(1.2);
+    }
+
+    .card-check {
+        cursor: pointer;
+        color: #e2e8f0;
+        /* Grayed out */
+        margin-left: 0.2rem;
+        transition: color 0.2s;
+        font-size: 1.25rem !important;
+        /* Override standard material size if needed */
+        user-select: none;
+    }
+
+    .card-check.completed {
+        color: #22c55e !important;
+    }
+
+    .task-card.completing {
+        pointer-events: none;
+        z-index: 100 !important;
+        transition: none !important;
+        animation: completeTask 0.7s ease-in-out forwards;
+    }
+
+    @keyframes completeTask {
+        0% {
+            transform: scale(1);
+            background: var(--bg-card);
+            opacity: 1;
+        }
+
+        30% {
+            transform: scale(1.05);
+            background: #dcfce7;
+            border-color: #22c55e;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+        }
+
+        100% {
+            transform: scale(0.1);
+            opacity: 0;
+            margin-bottom: -50px;
+        }
+    }
+
+    .task-card.appearing {
+        animation: appearTask 0.5s ease-out forwards;
+    }
+
+    @keyframes appearTask {
+        0% {
+            transform: scale(0.8);
+            opacity: 0;
+            background: #dcfce7;
+            border-color: #22c55e;
+        }
+
+        50% {
+            background: #dcfce7;
+            border-color: #22c55e;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+            background: var(--bg-card);
+            border-color: rgba(226, 232, 240, 0.8);
+        }
+    }
+
+    .card-check:hover {
+        color: #22c55e;
+        /* Green on hover */
+    }
+
+    .card-group {
+        display: inline-block;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 0.05rem 0.3rem;
+        border-radius: 3px;
+        color: white;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .card-title {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: var(--text-main);
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+    }
+
+    .card-due {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #475569;
+        /* Darker than text-muted for better visibility */
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .card-due.overdue {
+        color: #ef4444;
+        font-weight: 600;
+    }
+
+    /* Card Content Preview */
+    .card-preview {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        line-height: 1.3;
+        margin-top: 0.1rem;
+
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .card-content {
+        display: none;
+    }
+
+    /* Show Detail Mode (if toggled) */
+    .show-detail .card-content {
+        display: block !important;
+        font-size: 0.85rem;
+        color: var(--text-main);
+        white-space: pre-wrap;
+        margin-top: 0.5rem;
+        border-top: 1px solid var(--border);
+        padding-top: 0.5rem;
+    }
+
+    .show-detail .card-preview {
+        display: none !important;
+    }
+
+    /* Modal & Overlay */
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .overlay.show {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .loader {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid var(--primary);
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    @media (max-width: 768px) {
+        header {
+            flex-direction: column;
+            height: auto;
+            gap: 0.5rem;
+            padding: 0.5rem;
+        }
+
+        .header-left {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .header-right {
+            width: 100%;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .kanban-grid {
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .kanban-column {
+            width: 100%;
+            min-width: 0;
+            margin-bottom: 1rem;
+        }
+
+        .resizer {
+            display: none;
+        }
+    }
+</style>
+<!-- --- END css.html --- -->
+
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <div class="header-left">
+                <h1>MyTask</h1>
+                <div class="filter-group">
+                    <select id="filterGroup">
+                        <option value="">全グループ</option>
+                    </select>
+                    <select id="filterPriority">
+                        <option value="">全優先度</option>
+                        <option value="高">高</option>
+                        <option value="中">中</option>
+                        <option value="低">低</option>
+                    </select>
+                </div>
+            </div>
+            <div class="header-right">
+                <button id="importTasksBtn" class="btn secondary">Google Task 抽出</button>
+                <button id="toggleDoneBtn" class="btn secondary">完了: 非表示</button>
+                <button id="toggleDetailBtn" class="btn secondary">詳細表示</button>
+                <button id="addTaskBtn" class="btn primary">新規タスク追加</button>
+            </div>
+        </header>
+
+        <main>
+            <div id="kanban-container" class="kanban-grid">
+                <div class="kanban-column" data-status="未着手">
+                    <div class="column-header">
+                        <h2>未着手 <span class="count">0</span></h2>
+                        <select class="column-sort" data-status="未着手">
+                            <option value="default">表示順</option>
+                            <option value="priority">優先度</option>
+                            <option value="group">グループ</option>
+                            <option value="dueDate">期限</option>
+                        </select>
+                    </div>
+                    <div class="task-list" id="backlog"></div>
+                </div>
+                <div class="resizer"></div>
+
+                <div class="kanban-column" data-status="実施中">
+                    <div class="column-header">
+                        <h2>実施中 <span class="count">0</span></h2>
+                        <select class="column-sort" data-status="実施中">
+                            <option value="default">表示順</option>
+                            <option value="priority">優先度</option>
+                            <option value="group">グループ</option>
+                            <option value="dueDate">期限</option>
+                        </select>
+                    </div>
+                    <div class="task-list" id="wip"></div>
+                </div>
+                <div class="resizer"></div>
+
+                <div class="kanban-column" data-status="保留">
+                    <div class="column-header">
+                        <h2>保留 <span class="count">0</span></h2>
+                        <select class="column-sort" data-status="保留">
+                            <option value="default">表示順</option>
+                            <option value="priority">優先度</option>
+                            <option value="group">グループ</option>
+                            <option value="dueDate">期限</option>
+                        </select>
+                    </div>
+                    <div class="task-list" id="pending"></div>
+                </div>
+                <div class="resizer"></div>
+
+                <div class="kanban-column" data-status="完了">
+                    <div class="column-header">
+                        <h2>完了 <span class="count">0</span></h2>
+                        <select class="column-sort" data-status="完了">
+                            <option value="default">表示順</option>
+                            <option value="priority">優先度</option>
+                            <option value="group">グループ</option>
+                            <option value="dueDate">期限</option>
+                        </select>
+                    </div>
+                    <div class="task-list" id="done"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modals -->
+        
+<!-- --- START modal.html --- -->
+<!-- Task Editor Modal -->
+<div id="taskModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">新規タスク追加</h2>
+            <span class="close-modal">&times;</span>
+        </div>
+        <form id="taskForm">
+            <input type="hidden" id="taskId">
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="taskGroup">タスクグループ</label>
+                    <input type="text" id="taskGroupInput" list="groupOptions" placeholder="グループ名を入力または選択">
+                    <datalist id="groupOptions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label for="taskPriorityInput">優先度</label>
+                    <select id="taskPriorityInput">
+                        <option value="高">高</option>
+                        <option value="中" selected>中</option>
+                        <option value="低">低</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="taskTitleInput">タスクタイトル</label>
+                <input type="text" id="taskTitleInput" required placeholder="タイトルを入力">
+            </div>
+
+            <div class="form-group">
+                <label>タスク内容 (リッチテキスト)</label>
+                <div class="rich-editor-container">
+                    <div class="toolbar" id="editorToolbar">
+                        <button type="button" data-cmd="bold" title="太字"><b>B</b></button>
+                        <button type="button" data-cmd="strikethrough" title="取り消し線"><s>S</s></button>
+                        <div class="color-picker">
+                            <button type="button" class="color-btn" id="colorBtn">A<span
+                                    class="color-bar"></span></button>
+                            <div class="color-menu" id="colorMenu">
+                                <div class="color-swatch" style="background:#000000" data-color="#000000"></div>
+                                <div class="color-swatch" style="background:#ef4444" data-color="#ef4444"></div>
+                                <div class="color-swatch" style="background:#3b82f6" data-color="#3b82f6"></div>
+                                <div class="color-swatch" style="background:#22c55e" data-color="#22c55e"></div>
+                                <div class="color-swatch" style="background:#f59e0b" data-color="#f59e0b"></div>
+                                <div class="color-swatch" style="background:#a855f7" data-color="#a855f7"></div>
+                                <div class="color-swatch" style="background:#ec4899" data-color="#ec4899"></div>
+                                <div class="color-swatch" style="background:#6b7280" data-color="#6b7280"></div>
+                            </div>
+                        </div>
+                        <button type="button" data-cmd="insertUnorderedList" title="箇条書き">•</button>
+                    </div>
+                    <div id="editor" contenteditable="true"></div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="taskDueDateInput">期限</label>
+                    <input type="date" id="taskDueDateInput">
+                </div>
+                <div class="form-group">
+                    <label for="taskStatusInput">ステータス</label>
+                    <select id="taskStatusInput">
+                        <option value="未着手">未着手</option>
+                        <option value="実施中">実施中</option>
+                        <option value="保留">保留</option>
+                        <option value="完了">完了</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" id="deleteTaskBtn" class="btn secondary danger" style="display:none">削除</button>
+                <div style="flex:1"></div>
+                <button type="button" class="btn secondary cancel-btn">キャンセル</button>
+                <button type="submit" class="btn primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        visibility: hidden;
+        opacity: 0;
+        transition: all 0.3s;
+    }
+
+    .modal-overlay.show {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    .modal-content {
+        background: white;
+        width: 90%;
+        max-width: 600px;
+        border-radius: var(--radius);
+        padding: 2rem;
+        box-shadow: var(--shadow-md);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .close-modal {
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--text-muted);
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+        color: var(--text-main);
+    }
+
+    .form-row {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .form-row .form-group {
+        flex: 1;
+    }
+
+    /* リッチエディタ */
+    .rich-editor-container {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .toolbar {
+        background: #f1f5f9;
+        border-bottom: 1px solid var(--border);
+        padding: 0.5rem;
+        display: flex;
+        gap: 0.25rem;
+        align-items: center;
+    }
+
+    .toolbar button {
+        width: 32px;
+        height: 32px;
+        border: 1px solid transparent;
+        background: transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .toolbar button:hover {
+        background: #e2e8f0;
+        border-color: var(--border);
+    }
+
+    #editor {
+        min-height: 150px;
+        max-height: 300px;
+        padding: 1rem;
+        outline: none;
+        overflow-y: auto;
+    }
+
+    /* カラーピッカー */
+    .color-picker {
+        position: relative;
+    }
+
+    .color-btn {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .color-bar {
+        width: 16px;
+        height: 3px;
+        background: black;
+        margin-top: -2px;
+    }
+
+    .color-menu {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background: white;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.5rem;
+        display: none;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.5rem;
+        z-index: 10;
+    }
+
+    .color-menu.show {
+        display: grid;
+    }
+
+    .color-swatch {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        cursor: pointer;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .color-swatch:hover {
+        transform: scale(1.1);
+    }
+
+    .modal-footer {
+        display: flex;
+        gap: 1rem;
+        padding-top: 1rem;
+    }
+
+    .btn.danger {
+        color: #ef4444;
+        border-color: #fecaca;
+    }
+
+    .btn.danger:hover {
+        background-color: #fef2f2;
+    }
+</style>
+<!-- --- END modal.html --- -->
+
+
+        <div id="loading-overlay" class="overlay">
+            <div class="loader"></div>
+        </div>
+    </div>
+
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+    <!-- Scripts -->
+    
+<!-- --- START js-ui-utils.html --- -->
+<script>
+    /**
+     * UI Utilities (Reusable)
+     */
+
+    function generateColorFromHash(string) {
+        if (!string) return '#94a3b8'; // default slate color
+        const colors = [
+            '#6366f1', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6', '#14b8a6',
+            '#f97316', '#06b6d4', '#84cc16', '#d946ef', '#0ea5e9', '#22c55e', '#eab308', '#64748b'
+        ];
+
+        let hash = 0;
+        for (let i = 0; i < string.length; i++) {
+            hash = string.charCodeAt(i) + ((hash << 5) - hash);
+            hash = hash & hash;
+        }
+
+        const index = Math.abs(hash) % colors.length;
+        return colors[index];
+    }
+
+    function showLoading(elementId, show) {
+        const el = document.getElementById(elementId);
+        if (el) {
+            el.classList.toggle('show', show);
+        }
+    }
+
+    /**
+     * Generic Column Resizer
+     * @param {string} resizerSelector CSS selector for resizer elements
+     * @param {string} columnSelector CSS selector for column elements (relative to resizer)
+     * @param {HTMLElement} containerElement Container element
+     */
+    function setupColumnResizer(resizerSelector, columnSelector, containerElement) {
+        const resizers = document.querySelectorAll(resizerSelector);
+        const columns = document.querySelectorAll(columnSelector);
+        if (!containerElement) return;
+
+        // Initial width balance
+        const totalGap = (resizers.length * 8) + 40;
+        const initialWidth = (containerElement.offsetWidth - totalGap) / columns.length;
+        columns.forEach(col => {
+            if (initialWidth > 200) col.style.width = initialWidth + 'px';
+        });
+
+        resizers.forEach(resizer => {
+            let startX, startWidth;
+            const column = resizer.previousElementSibling;
+
+            resizer.addEventListener('mousedown', e => {
+                startX = e.pageX;
+                startWidth = column.offsetWidth;
+
+                const onMouseMove = (moveEvent) => {
+                    const width = startWidth + (moveEvent.pageX - startX);
+                    if (width > 100) {
+                        column.style.flex = '0 0 auto'; // Disable flex to allow manual width
+                        column.style.width = width + 'px';
+                    }
+                };
+                const onMouseUp = () => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    resizer.classList.remove('resizing');
+                };
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+                resizer.classList.add('resizing');
+            });
+        });
+    }
+</script>
+<!-- --- END js-ui-utils.html --- -->
+
+    
+<!-- --- START js-rich-text-editor.html --- -->
+<script>
+    /**
+     * Rich Text Editor Component (Reusable)
+     */
+
+    const RichTextEditor = {
+        focusedRange: null,
+
+        init: function (editorId, toolbarId) {
+            const editor = document.getElementById(editorId);
+
+            editor.addEventListener('blur', () => {
+                const sel = window.getSelection();
+                if (sel.rangeCount > 0) {
+                    this.focusedRange = sel.getRangeAt(0);
+                }
+            });
+
+            const buttons = document.querySelectorAll(`#${toolbarId} button[data-cmd]`);
+            buttons.forEach(btn => {
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    this.restoreFocus(editor);
+                    const cmd = btn.dataset.cmd;
+                    document.execCommand(cmd, false, null);
+                };
+            });
+        },
+
+        restoreFocus: function (editorElement) {
+            editorElement.focus();
+            if (this.focusedRange) {
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(this.focusedRange);
+            }
+        },
+
+        applyColor: function (editorId, color) {
+            const editor = document.getElementById(editorId);
+            this.restoreFocus(editor);
+            document.execCommand('foreColor', false, color);
+        },
+
+        getHtml: function (editorId) {
+            return document.getElementById(editorId).innerHTML;
+        },
+
+        getRawText: function (editorId) {
+            return document.getElementById(editorId).innerText;
+        },
+
+        setHtml: function (editorId, html) {
+            document.getElementById(editorId).innerHTML = html;
+        },
+
+        clear: function (editorId) {
+            document.getElementById(editorId).innerHTML = '';
+        }
+    };
+</script>
+<!-- --- END js-rich-text-editor.html --- -->
+
+    
+<!-- --- START js-kanban-view.html --- -->
+<script>
+    /**
+     * Kanban View Logic
+     */
+
+    function renderBoard() {
+        const containers = {
+            '未着手': document.getElementById('backlog'),
+            '実施中': document.getElementById('wip'),
+            '保留': document.getElementById('pending'),
+            '完了': document.getElementById('done')
+        };
+
+        // Clear
+        Object.values(containers).forEach(c => c.innerHTML = '');
+
+        const filtered = state.tasks.filter(t => {
+            const matchGroup = !state.filter.group || t.group === state.filter.group;
+            const matchPriority = !state.filter.priority || t.priority === state.filter.priority;
+            return matchGroup && matchPriority;
+        });
+
+        // Group by status
+        const statusGroups = { '未着手': [], '実施中': [], '保留': [], '完了': [] };
+        filtered.forEach(t => { if (statusGroups[t.status]) statusGroups[t.status].push(t); });
+
+        Object.entries(statusGroups).forEach(([status, tasks]) => {
+            const list = containers[status];
+            const sortMode = state.columnSort[status];
+
+            // Sort
+            tasks.sort((a, b) => {
+                if (sortMode === 'priority') {
+                    const order = { '高': 1, '中': 2, '低': 3 };
+                    return (order[a.priority] || 99) - (order[b.priority] || 99);
+                } else if (sortMode === 'group') {
+                    return (a.group || '').localeCompare(b.group || '', 'ja');
+                } else if (sortMode === 'dueDate') {
+                    if (!a.dueDate) return 1;
+                    if (!b.dueDate) return -1;
+                    return new Date(a.dueDate) - new Date(b.dueDate);
+                }
+                // default
+                return (a.no || 0) - (b.no || 0);
+            });
+
+            tasks.forEach(task => {
+                const card = createCardElement(task);
+                list.appendChild(card);
+            });
+
+            // Update count
+            list.parentElement.querySelector('.count').innerText = tasks.length;
+        });
+
+        document.getElementById('kanban-container').classList.toggle('show-detail', state.showDetail);
+    }
+
+    function createCardElement(task) {
+        const div = document.createElement('div');
+        const priorityClass = `priority-${state.mapping.PRIORITY[task.priority] || 'middle'}`;
+
+        div.className = `task-card ${priorityClass}`;
+        div.dataset.id = task.id;
+        div.dataset.status = task.status;
+
+        const dateStr = task.dueDate ? new Date(task.dueDate).toLocaleDateString('ja-JP') : '';
+        const groupColor = generateColorFromHash(task.group);
+
+        // Check if overdue (only for non-completed tasks)
+        let dueDateClass = '';
+        if (task.dueDate && task.status !== '完了') {
+            const dueDate = new Date(task.dueDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            dueDate.setHours(0, 0, 0, 0);
+            if (dueDate < today) {
+                dueDateClass = 'overdue';
+            }
+        }
+
+        const labelSymbol = task.label || '★';
+        const labelClass = task.label ? 'active' : 'inactive';
+        const checkClass = task.status === '完了' ? 'completed' : '';
+
+        div.innerHTML = `
+    <div class="card-header-row">
+      <span class="card-label ${labelClass}" title="Label">${labelSymbol}</span>
+      <div class="card-group" style="background-color: ${groupColor}">${task.group || 'なし'}</div>
+      <div class="card-title">${task.title}</div>
+      <div class="card-due ${dueDateClass}">${dateStr}</div>
+      <span class="card-check material-icons ${checkClass}" title="Complete">check_circle</span>
+    </div>
+    <div class="card-preview"></div>
+    <div class="card-content">${task.contentHtml}</div>
+`;
+        div.querySelector('.card-preview').innerText = task.contentRaw || '';
+
+        // Add fade-in animation for newly moved tasks
+        if (task._justCompleted) {
+            div.classList.add('appearing');
+            delete task._justCompleted; // Clear flag
+        }
+
+        // Label Click
+        div.querySelector('.card-label').onclick = (e) => {
+            e.stopPropagation();
+            const labels = ['★', '⭐', '⚠️', '💥', '🩷'];
+            // If current is empty or not in list (default star is visual only for empty), assume index 0
+            // Actually, if saved value is empty, we show gray star.
+            // Sequence: Gray Star (empty) -> ⭐ -> ⚠️ -> ...
+            // Let's treat '★' as empty in logic if it's the gray one, but user wants rotation.
+            // If task.label is empty, next is ⭐.
+            let currentIdx = labels.indexOf(task.label);
+            if (currentIdx === -1) currentIdx = 0; // Default or empty treated as start
+
+            const nextIdx = (currentIdx + 1) % labels.length;
+            const nextLabel = labels[nextIdx];
+
+            // Optimistic Update
+            task.label = nextLabel === '★' ? '' : nextLabel;
+            // If '★' is the "empty/gray" state, we might save empty string. 
+            // User: "Usually gray star, click -> ⭐...". So gray star is default state.
+
+            e.target.innerText = nextLabel;
+            e.target.className = `card-label ${task.label ? 'active' : 'inactive'}`;
+
+            google.script.run.withFailureHandler(handleError).saveTask(task);
+        };
+
+        // Check Click
+        div.querySelector('.card-check').onclick = (e) => {
+            e.stopPropagation();
+
+            if (task.status === '完了') {
+                // Uncheck: Move back to In Progress
+                div.classList.add('completing'); // Fade-out animation
+                e.target.classList.remove('completed'); // Remove green immediately
+
+                setTimeout(() => {
+                    task.status = '実施中';
+                    task._justCompleted = true; // Flag for fade-in animation
+                    renderBoard();
+                    google.script.run.withFailureHandler(handleError).saveTask(task);
+                }, 700); // Wait for animation
+            } else {
+                // Check: Move to Done
+                div.classList.add('completing');
+                e.target.classList.add('completed'); // Green check immediately
+
+                setTimeout(() => {
+                    // Move to Done after animation
+                    task.status = '完了';
+                    task._justCompleted = true; // Flag for fade-in animation
+                    renderBoard();
+                    google.script.run.withFailureHandler(handleError).saveTask(task);
+                }, 700); // Wait for animation
+            }
+        };
+
+        div.onclick = () => openModal(task);
+        return div;
+
+    }
+
+    function setupSortable() {
+        const lists = document.querySelectorAll('.task-list');
+        lists.forEach(el => {
+            Sortable.create(el, {
+                group: 'kanban',
+                animation: 150,
+                ghostClass: 'dragging',
+                onEnd: (evt) => {
+                    if (evt.from === evt.to && evt.oldIndex === evt.newIndex) return;
+                    updateAfterDrag();
+                }
+            });
+        });
+    }
+
+    function updateAfterDrag() {
+        const updates = [];
+        const statusCols = document.querySelectorAll('.kanban-column');
+
+        statusCols.forEach(col => {
+            const status = col.dataset.status;
+            const cards = col.querySelectorAll('.task-card');
+            cards.forEach((card, index) => {
+                const id = card.dataset.id;
+                const no = index + 1;
+
+                // Update state
+                const task = state.tasks.find(t => t.id == id);
+                if (task) {
+                    task.status = status;
+                    task.no = no;
+                }
+
+                updates.push({ id, status, no });
+            });
+        });
+
+        renderBoard();
+
+        google.script.run
+            .withFailureHandler(handleError)
+            .updateOrderAndStatus(updates);
+    }
+
+    function setupResizers() {
+        setupColumnResizer('.resizer', '.kanban-column', document.getElementById('kanban-container'));
+    }
+</script>
+<!-- --- END js-kanban-view.html --- -->
+
+    
+<!-- --- START js-task-modal.html --- -->
+<script>
+    /**
+     * Task Modal Logic
+     */
+
+    function setupTaskModal() {
+        // Modal events
+        const modal = document.getElementById('taskModal');
+        const closeModal = () => modal.classList.remove('show');
+
+        document.querySelector('.close-modal').onclick = closeModal;
+        document.querySelector('.cancel-btn').onclick = closeModal;
+
+        document.getElementById('taskForm').onsubmit = (e) => {
+            e.preventDefault();
+            saveCurrentTask();
+        };
+
+        document.getElementById('deleteTaskBtn').onclick = () => {
+            if (confirm('このタスクを削除しますか？')) {
+                deleteCurrentTask();
+            }
+        };
+
+        // Color Picker Logic (integrated with RichTextEditor)
+        const colorBtn = document.getElementById('colorBtn');
+        const colorMenu = document.getElementById('colorMenu');
+
+        colorBtn.onclick = (e) => {
+            e.preventDefault();
+            colorMenu.classList.toggle('show');
+        };
+
+        document.querySelectorAll('.color-swatch').forEach(swatch => {
+            swatch.onclick = (e) => {
+                const color = swatch.dataset.color;
+                RichTextEditor.applyColor('editor', color);
+                colorMenu.classList.remove('show');
+                colorBtn.querySelector('.color-bar').style.background = color;
+            };
+        });
+
+        window.addEventListener('click', (e) => {
+            if (!colorBtn.contains(e.target)) colorMenu.classList.remove('show');
+        });
+    }
+
+    function openModal(task = null) {
+        const form = document.getElementById('taskForm');
+        const modal = document.getElementById('taskModal');
+        const title = document.getElementById('modalTitle');
+
+        form.reset();
+        RichTextEditor.clear('editor');
+        document.getElementById('deleteTaskBtn').style.display = task ? 'block' : 'none';
+
+        if (task) {
+            title.innerText = 'タスク編集';
+            document.getElementById('taskId').value = task.id;
+            document.getElementById('taskGroupInput').value = task.group;
+            document.getElementById('taskPriorityInput').value = task.priority;
+            document.getElementById('taskTitleInput').value = task.title;
+            RichTextEditor.setHtml('editor', task.contentHtml);
+            document.getElementById('taskDueDateInput').value = task.dueDate ? task.dueDate.split('T')[0] : '';
+            document.getElementById('taskStatusInput').value = task.status;
+        } else {
+            title.innerText = '新規タスク追加';
+            document.getElementById('taskId').value = '';
+        }
+
+        modal.classList.add('show');
+    }
+
+    function saveCurrentTask() {
+        const id = document.getElementById('taskId').value;
+        const task = {
+            id: id,
+            group: document.getElementById('taskGroupInput').value,
+            priority: document.getElementById('taskPriorityInput').value,
+            title: document.getElementById('taskTitleInput').value,
+            contentHtml: RichTextEditor.getHtml('editor'),
+            contentRaw: RichTextEditor.getRawText('editor'),
+            dueDate: document.getElementById('taskDueDateInput').value,
+            status: document.getElementById('taskStatusInput').value
+        };
+
+        showLoading('loading-overlay', true);
+        google.script.run
+            .withSuccessHandler(() => {
+                document.getElementById('taskModal').classList.remove('show');
+                refreshData();
+            })
+            .withFailureHandler(handleError)
+            .saveTask(task);
+    }
+
+    function deleteCurrentTask() {
+        const id = document.getElementById('taskId').value;
+        showLoading('loading-overlay', true);
+        google.script.run
+            .withSuccessHandler(() => {
+                document.getElementById('taskModal').classList.remove('show');
+                refreshData();
+            })
+            .withFailureHandler(handleError)
+            .deleteTask(id);
+    }
+</script>
+<!-- --- END js-task-modal.html --- -->
+
+    
+<!-- --- START js-main.html --- -->
+<script>
+    /**
+     * Main Client Controller
+     */
+
+    const state = {
+        tasks: [],
+        mapping: {},
+        filter: { group: '', priority: '' },
+        columnSort: {
+            '未着手': 'default',
+            '実施中': 'default',
+            '保留': 'default',
+            '完了': 'default'
+        },
+        showDetail: false,
+        showDone: false
+    };
+
+    // Initial Load
+    window.onload = () => {
+        showLoading('loading-overlay', true);
+        RichTextEditor.init('editor', 'editorToolbar');
+        setupEventListeners();
+        setupSortable(); // Move potentially static setups here
+        setupResizers();
+        setupTaskModal();
+
+        // Initial UI State check
+        if (window.updateDoneVisibility) window.updateDoneVisibility();
+
+        google.script.run
+            .withSuccessHandler(initialize)
+            .withFailureHandler(handleError)
+            .getData();
+
+        google.script.run
+            .withSuccessHandler(s => { state.mapping = s.mapping; })
+            .getSettings();
+    };
+
+    function initialize(data) {
+        state.tasks = data;
+        updateDataLists();
+        renderBoard();
+        // Event listeners and static setups moved to window.onload to prevent duplication and state reset
+        showLoading('loading-overlay', false);
+    }
+
+    function refreshData() {
+        google.script.run
+            .withSuccessHandler(initialize)
+            .withFailureHandler(handleError)
+            .getData();
+    }
+
+    function updateDataLists() {
+        const groups = [...new Set(state.tasks.map(t => t.group).filter(Boolean))];
+        const filterSelect = document.getElementById('filterGroup');
+        const datalist = document.getElementById('groupOptions');
+
+        // Filter HTML
+        const currentFilter = filterSelect.value;
+        filterSelect.innerHTML = '<option value="">全グループ</option>' +
+            groups.map(g => `<option value="${g}" ${g === currentFilter ? 'selected' : ''}>${g}</option>`).join('');
+
+        // Modal Input Candidates
+        datalist.innerHTML = groups.map(g => `<option value="${g}">`).join('');
+    }
+
+    function setupEventListeners() {
+        // Filter
+        document.getElementById('filterGroup').onchange = (e) => {
+            state.filter.group = e.target.value;
+            renderBoard();
+        };
+        document.getElementById('filterPriority').onchange = (e) => {
+            state.filter.priority = e.target.value;
+            renderBoard();
+        };
+
+        // Column Sort
+        document.querySelectorAll('.column-sort').forEach(sel => {
+            sel.onchange = (e) => {
+                const status = e.target.dataset.status;
+                state.columnSort[status] = e.target.value;
+                renderBoard();
+            };
+        });
+
+        // Toggle Detail
+        document.getElementById('toggleDetailBtn').onclick = (e) => {
+            state.showDetail = !state.showDetail;
+            e.target.innerText = state.showDetail ? '詳細非表示' : '詳細表示';
+            renderBoard(); // Re-render to apply class
+        };
+
+        // Toggle Done Column
+        const doneColumn = document.querySelector('.kanban-column[data-status="完了"]');
+
+        window.updateDoneVisibility = () => {
+            const btn = document.getElementById('toggleDoneBtn');
+            // Reset widths
+            document.querySelectorAll('.kanban-column').forEach(col => {
+                col.style.width = '';
+                col.style.flex = '1 1 0';
+            });
+
+            if (state.showDone) {
+                doneColumn.classList.remove('hidden');
+                btn.innerText = '完了: 表示';
+                btn.classList.add('primary');
+                btn.classList.remove('secondary');
+            } else {
+                doneColumn.classList.add('hidden');
+                btn.innerText = '完了: 非表示';
+                btn.classList.remove('primary');
+                btn.classList.add('secondary');
+            }
+        };
+
+        document.getElementById('toggleDoneBtn').onclick = () => {
+            state.showDone = !state.showDone;
+            window.updateDoneVisibility();
+        };
+
+        // Add Task
+        document.getElementById('addTaskBtn').onclick = () => openModal();
+
+        // Import Google Tasks
+        document.getElementById('importTasksBtn').onclick = () => {
+            showLoading('loading-overlay', true);
+            google.script.run
+                .withSuccessHandler(res => {
+                    refreshData();
+                    alert(`${res.count} 件のタスクを抽出しました。`);
+                })
+                .withFailureHandler(handleError)
+                .importFromGoogleTasks();
+        };
+    }
+
+    function handleError(err) {
+        showLoading('loading-overlay', false);
+        alert('Error: ' + err.message);
+        console.error(err);
+    }
+</script>
+<!-- --- END js-main.html --- -->
+
+</body>
+
+</html>

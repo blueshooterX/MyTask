@@ -1,0 +1,148 @@
+<script>
+    /**
+     * Main Client Controller
+     */
+
+    const state = {
+        tasks: [],
+        mapping: {},
+        filter: { group: '', priority: '' },
+        columnSort: {
+            '未着手': 'default',
+            '実施中': 'default',
+            '保留': 'default',
+            '完了': 'default'
+        },
+        showDetail: false,
+        showDone: false
+    };
+
+    // Initial Load
+    window.onload = () => {
+        showLoading('loading-overlay', true);
+        RichTextEditor.init('editor', 'editorToolbar');
+        setupEventListeners();
+        setupSortable(); // Move potentially static setups here
+        setupResizers();
+        setupTaskModal();
+
+        // Initial UI State check
+        if (window.updateDoneVisibility) window.updateDoneVisibility();
+
+        google.script.run
+            .withSuccessHandler(initialize)
+            .withFailureHandler(handleError)
+            .getData();
+
+        google.script.run
+            .withSuccessHandler(s => { state.mapping = s.mapping; })
+            .getSettings();
+    };
+
+    function initialize(data) {
+        state.tasks = data;
+        updateDataLists();
+        renderBoard();
+        // Event listeners and static setups moved to window.onload to prevent duplication and state reset
+        showLoading('loading-overlay', false);
+    }
+
+    function refreshData() {
+        google.script.run
+            .withSuccessHandler(initialize)
+            .withFailureHandler(handleError)
+            .getData();
+    }
+
+    function updateDataLists() {
+        const groups = [...new Set(state.tasks.map(t => t.group).filter(Boolean))];
+        const filterSelect = document.getElementById('filterGroup');
+        const datalist = document.getElementById('groupOptions');
+
+        // Filter HTML
+        const currentFilter = filterSelect.value;
+        filterSelect.innerHTML = '<option value="">全グループ</option>' +
+            groups.map(g => `<option value="${g}" ${g === currentFilter ? 'selected' : ''}>${g}</option>`).join('');
+
+        // Modal Input Candidates
+        datalist.innerHTML = groups.map(g => `<option value="${g}">`).join('');
+    }
+
+    function setupEventListeners() {
+        // Filter
+        document.getElementById('filterGroup').onchange = (e) => {
+            state.filter.group = e.target.value;
+            renderBoard();
+        };
+        document.getElementById('filterPriority').onchange = (e) => {
+            state.filter.priority = e.target.value;
+            renderBoard();
+        };
+
+        // Column Sort
+        document.querySelectorAll('.column-sort').forEach(sel => {
+            sel.onchange = (e) => {
+                const status = e.target.dataset.status;
+                state.columnSort[status] = e.target.value;
+                renderBoard();
+            };
+        });
+
+        // Toggle Detail
+        document.getElementById('toggleDetailBtn').onclick = (e) => {
+            state.showDetail = !state.showDetail;
+            e.target.innerText = state.showDetail ? '詳細非表示' : '詳細表示';
+            renderBoard(); // Re-render to apply class
+        };
+
+        // Toggle Done Column
+        const doneColumn = document.querySelector('.kanban-column[data-status="完了"]');
+
+        window.updateDoneVisibility = () => {
+            const btn = document.getElementById('toggleDoneBtn');
+            // Reset widths
+            document.querySelectorAll('.kanban-column').forEach(col => {
+                col.style.width = '';
+                col.style.flex = '1 1 0';
+            });
+
+            if (state.showDone) {
+                doneColumn.classList.remove('hidden');
+                btn.innerText = '完了: 表示';
+                btn.classList.add('primary');
+                btn.classList.remove('secondary');
+            } else {
+                doneColumn.classList.add('hidden');
+                btn.innerText = '完了: 非表示';
+                btn.classList.remove('primary');
+                btn.classList.add('secondary');
+            }
+        };
+
+        document.getElementById('toggleDoneBtn').onclick = () => {
+            state.showDone = !state.showDone;
+            window.updateDoneVisibility();
+        };
+
+        // Add Task
+        document.getElementById('addTaskBtn').onclick = () => openModal();
+
+        // Import Google Tasks
+        document.getElementById('importTasksBtn').onclick = () => {
+            showLoading('loading-overlay', true);
+            google.script.run
+                .withSuccessHandler(res => {
+                    refreshData();
+                    alert(`${res.count} 件のタスクを抽出しました。`);
+                })
+                .withFailureHandler(handleError)
+                .importFromGoogleTasks();
+        };
+    }
+
+    function handleError(err) {
+        showLoading('loading-overlay', false);
+        alert('Error: ' + err.message);
+        console.error(err);
+    }
+</script>

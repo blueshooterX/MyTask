@@ -1,0 +1,213 @@
+<script>
+    /**
+     * Kanban View Logic
+     */
+
+    function renderBoard() {
+        const containers = {
+            '未着手': document.getElementById('backlog'),
+            '実施中': document.getElementById('wip'),
+            '保留': document.getElementById('pending'),
+            '完了': document.getElementById('done')
+        };
+
+        // Clear
+        Object.values(containers).forEach(c => c.innerHTML = '');
+
+        const filtered = state.tasks.filter(t => {
+            const matchGroup = !state.filter.group || t.group === state.filter.group;
+            const matchPriority = !state.filter.priority || t.priority === state.filter.priority;
+            return matchGroup && matchPriority;
+        });
+
+        // Group by status
+        const statusGroups = { '未着手': [], '実施中': [], '保留': [], '完了': [] };
+        filtered.forEach(t => { if (statusGroups[t.status]) statusGroups[t.status].push(t); });
+
+        Object.entries(statusGroups).forEach(([status, tasks]) => {
+            const list = containers[status];
+            const sortMode = state.columnSort[status];
+
+            // Sort
+            tasks.sort((a, b) => {
+                if (sortMode === 'priority') {
+                    const order = { '高': 1, '中': 2, '低': 3 };
+                    return (order[a.priority] || 99) - (order[b.priority] || 99);
+                } else if (sortMode === 'group') {
+                    return (a.group || '').localeCompare(b.group || '', 'ja');
+                } else if (sortMode === 'dueDate') {
+                    if (!a.dueDate) return 1;
+                    if (!b.dueDate) return -1;
+                    return new Date(a.dueDate) - new Date(b.dueDate);
+                }
+                // default
+                return (a.no || 0) - (b.no || 0);
+            });
+
+            tasks.forEach(task => {
+                const card = createCardElement(task);
+                list.appendChild(card);
+            });
+
+            // Update count
+            list.parentElement.querySelector('.count').innerText = tasks.length;
+        });
+
+        document.getElementById('kanban-container').classList.toggle('show-detail', state.showDetail);
+    }
+
+    function createCardElement(task) {
+        const div = document.createElement('div');
+        const priorityClass = `priority-${state.mapping.PRIORITY[task.priority] || 'middle'}`;
+
+        div.className = `task-card ${priorityClass}`;
+        div.dataset.id = task.id;
+        div.dataset.status = task.status;
+
+        const dateStr = task.dueDate ? new Date(task.dueDate).toLocaleDateString('ja-JP') : '';
+        const groupColor = generateColorFromHash(task.group);
+
+        // Check if overdue (only for non-completed tasks)
+        let dueDateClass = '';
+        if (task.dueDate && task.status !== '完了') {
+            const dueDate = new Date(task.dueDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            dueDate.setHours(0, 0, 0, 0);
+            if (dueDate < today) {
+                dueDateClass = 'overdue';
+            }
+        }
+
+        const labelSymbol = task.label || '★';
+        const labelClass = task.label ? 'active' : 'inactive';
+        const checkClass = task.status === '完了' ? 'completed' : '';
+
+        div.innerHTML = `
+    <div class="card-header-row">
+      <span class="card-label ${labelClass}" title="Label">${labelSymbol}</span>
+      <div class="card-group" style="background-color: ${groupColor}">${task.group || 'なし'}</div>
+      <div class="card-title">${task.title}</div>
+      <div class="card-due ${dueDateClass}">${dateStr}</div>
+      <span class="card-check material-icons ${checkClass}" title="Complete">check_circle</span>
+    </div>
+    <div class="card-preview"></div>
+    <div class="card-content">${task.contentHtml}</div>
+`;
+        div.querySelector('.card-preview').innerText = task.contentRaw || '';
+
+        // Add fade-in animation for newly moved tasks
+        if (task._justCompleted) {
+            div.classList.add('appearing');
+            delete task._justCompleted; // Clear flag
+        }
+
+        // Label Click
+        div.querySelector('.card-label').onclick = (e) => {
+            e.stopPropagation();
+            const labels = ['★', '⭐', '⚠️', '💥', '🩷'];
+            // If current is empty or not in list (default star is visual only for empty), assume index 0
+            // Actually, if saved value is empty, we show gray star.
+            // Sequence: Gray Star (empty) -> ⭐ -> ⚠️ -> ...
+            // Let's treat '★' as empty in logic if it's the gray one, but user wants rotation.
+            // If task.label is empty, next is ⭐.
+            let currentIdx = labels.indexOf(task.label);
+            if (currentIdx === -1) currentIdx = 0; // Default or empty treated as start
+
+            const nextIdx = (currentIdx + 1) % labels.length;
+            const nextLabel = labels[nextIdx];
+
+            // Optimistic Update
+            task.label = nextLabel === '★' ? '' : nextLabel;
+            // If '★' is the "empty/gray" state, we might save empty string. 
+            // User: "Usually gray star, click -> ⭐...". So gray star is default state.
+
+            e.target.innerText = nextLabel;
+            e.target.className = `card-label ${task.label ? 'active' : 'inactive'}`;
+
+            google.script.run.withFailureHandler(handleError).saveTask(task);
+        };
+
+        // Check Click
+        div.querySelector('.card-check').onclick = (e) => {
+            e.stopPropagation();
+
+            if (task.status === '完了') {
+                // Uncheck: Move back to In Progress
+                div.classList.add('completing'); // Fade-out animation
+                e.target.classList.remove('completed'); // Remove green immediately
+
+                setTimeout(() => {
+                    task.status = '実施中';
+                    task._justCompleted = true; // Flag for fade-in animation
+                    renderBoard();
+                    google.script.run.withFailureHandler(handleError).saveTask(task);
+                }, 700); // Wait for animation
+            } else {
+                // Check: Move to Done
+                div.classList.add('completing');
+                e.target.classList.add('completed'); // Green check immediately
+
+                setTimeout(() => {
+                    // Move to Done after animation
+                    task.status = '完了';
+                    task._justCompleted = true; // Flag for fade-in animation
+                    renderBoard();
+                    google.script.run.withFailureHandler(handleError).saveTask(task);
+                }, 700); // Wait for animation
+            }
+        };
+
+        div.onclick = () => openModal(task);
+        return div;
+
+    }
+
+    function setupSortable() {
+        const lists = document.querySelectorAll('.task-list');
+        lists.forEach(el => {
+            Sortable.create(el, {
+                group: 'kanban',
+                animation: 150,
+                ghostClass: 'dragging',
+                onEnd: (evt) => {
+                    if (evt.from === evt.to && evt.oldIndex === evt.newIndex) return;
+                    updateAfterDrag();
+                }
+            });
+        });
+    }
+
+    function updateAfterDrag() {
+        const updates = [];
+        const statusCols = document.querySelectorAll('.kanban-column');
+
+        statusCols.forEach(col => {
+            const status = col.dataset.status;
+            const cards = col.querySelectorAll('.task-card');
+            cards.forEach((card, index) => {
+                const id = card.dataset.id;
+                const no = index + 1;
+
+                // Update state
+                const task = state.tasks.find(t => t.id == id);
+                if (task) {
+                    task.status = status;
+                    task.no = no;
+                }
+
+                updates.push({ id, status, no });
+            });
+        });
+
+        renderBoard();
+
+        google.script.run
+            .withFailureHandler(handleError)
+            .updateOrderAndStatus(updates);
+    }
+
+    function setupResizers() {
+        setupColumnResizer('.resizer', '.kanban-column', document.getElementById('kanban-container'));
+    }
+</script>
