@@ -16,7 +16,7 @@
     <div id="app">
         <header>
             <div class="header-left">
-                <h1>MyTask</h1>
+                <h1>MyTask <span id="appVersion" class="version-tag"></span></h1>
                 <div class="filter-group">
                     <select id="filterGroup">
                         <option value="">全グループ</option>
@@ -30,10 +30,20 @@
                 </div>
             </div>
             <div class="header-right">
-                <button id="importTasksBtn" class="btn secondary">Google Task 抽出</button>
-                <button id="toggleDoneBtn" class="btn secondary">完了: 非表示</button>
-                <button id="toggleDetailBtn" class="btn secondary">詳細表示</button>
+                <button id="toggleDoneBtn" class="btn secondary">完了：非表示</button>
+                <button id="toggleDetailBtn" class="btn secondary">詳細：非表示</button>
                 <button id="addTaskBtn" class="btn primary">新規タスク追加</button>
+                <div class="menu-container">
+                    <button id="menuTrigger" class="menu-trigger">
+                        <span class="material-icons">more_vert</span>
+                    </button>
+                    <div id="dropdownMenu" class="dropdown-menu">
+                        <div id="importTasksBtn" class="dropdown-item">
+                            <span class="material-icons">download</span>
+                            <span>Google Task 抽出</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </header>
 

@@ -30,5 +30,6 @@ const CONFIG = {
             '中': 'middle',
             '低': 'low'
         }
-    }
+    },
+    VERSION: 'v1.1.0'
 };

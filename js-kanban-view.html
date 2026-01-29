@@ -94,7 +94,22 @@
     <div class="card-preview"></div>
     <div class="card-content">${task.contentHtml}</div>
 `;
-        div.querySelector('.card-preview').innerText = task.contentRaw || '';
+        // Process content with icons
+        const processedHtml = (task.contentHtml || '').replace(
+            /(https?:\/\/[^\s<]+)/g,
+            (url) => {
+                const icon = getUrlIcon(url);
+                return `<a href="${url}" target="_blank" class="url-inline-link" onclick="event.stopPropagation()"><span class="material-icons">${icon}</span>${url}</a>`;
+            }
+        );
+        div.querySelector('.card-content').innerHTML = processedHtml;
+
+        // Preview also gets icons but maybe just as indicators
+        const previewText = task.contentRaw || '';
+        div.querySelector('.card-preview').innerHTML = previewText.replace(
+            /(https?:\/\/[^\s]+)/g,
+            (url) => `<span class="material-icons preview-inline-icon">${getUrlIcon(url)}</span>`
+        );
 
         // Add fade-in animation for newly moved tasks
         if (task._justCompleted) {
@@ -209,5 +224,13 @@
 
     function setupResizers() {
         setupColumnResizer('.resizer', '.kanban-column', document.getElementById('kanban-container'));
+    }
+
+    function getUrlIcon(url) {
+        if (url.includes('mail.google.com')) return 'email';
+        if (url.includes('drive.google.com')) return 'folder';
+        if (url.includes('calendar.google.com')) return 'calendar_today';
+        if (url.includes('meet.google.com')) return 'videocam';
+        return 'link';
     }
 </script>

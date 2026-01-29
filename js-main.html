@@ -27,16 +27,19 @@
         setupTaskModal();
 
         // Initial UI State check
-        if (window.updateDoneVisibility) window.updateDoneVisibility();
+        updateDoneVisibility();
+        updateDetailButton();
 
+        // Load Data and Settings
         google.script.run
             .withSuccessHandler(initialize)
             .withFailureHandler(handleError)
             .getData();
 
-        google.script.run
-            .withSuccessHandler(s => { state.mapping = s.mapping; })
-            .getSettings();
+        google.script.run.withSuccessHandler(settings => {
+            state.mapping = settings.mapping;
+            document.getElementById('appVersion').innerText = settings.version || '';
+        }).getSettings();
     };
 
     function initialize(data) {
@@ -89,10 +92,22 @@
         });
 
         // Toggle Detail
-        document.getElementById('toggleDetailBtn').onclick = (e) => {
+        window.updateDetailButton = () => {
+            const btn = document.getElementById('toggleDetailBtn');
+            if (state.showDetail) {
+                btn.innerText = '詳細：表示';
+                btn.classList.add('primary');
+                btn.classList.remove('secondary');
+            } else {
+                btn.innerText = '詳細：非表示';
+                btn.classList.remove('primary');
+                btn.classList.add('secondary');
+            }
+        };
+        document.getElementById('toggleDetailBtn').onclick = () => {
             state.showDetail = !state.showDetail;
-            e.target.innerText = state.showDetail ? '詳細非表示' : '詳細表示';
-            renderBoard(); // Re-render to apply class
+            updateDetailButton();
+            renderBoard();
         };
 
         // Toggle Done Column
@@ -108,12 +123,12 @@
 
             if (state.showDone) {
                 doneColumn.classList.remove('hidden');
-                btn.innerText = '完了: 表示';
+                btn.innerText = '完了：表示';
                 btn.classList.add('primary');
                 btn.classList.remove('secondary');
             } else {
                 doneColumn.classList.add('hidden');
-                btn.innerText = '完了: 非表示';
+                btn.innerText = '完了：非表示';
                 btn.classList.remove('primary');
                 btn.classList.add('secondary');
             }
@@ -129,6 +144,7 @@
 
         // Import Google Tasks
         document.getElementById('importTasksBtn').onclick = () => {
+            document.getElementById('dropdownMenu').classList.remove('show');
             showLoading('loading-overlay', true);
             google.script.run
                 .withSuccessHandler(res => {
@@ -137,6 +153,17 @@
                 })
                 .withFailureHandler(handleError)
                 .importFromGoogleTasks();
+        };
+
+        // Menu Toggle
+        const menuTrigger = document.getElementById('menuTrigger');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        menuTrigger.onclick = (e) => {
+            e.stopPropagation();
+            dropdownMenu.classList.toggle('show');
+        };
+        window.onclick = () => {
+            dropdownMenu.classList.remove('show');
         };
     }
 

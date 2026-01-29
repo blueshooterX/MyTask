@@ -35,6 +35,7 @@ function checkAccess() {
 function getSettings() {
     return {
         mapping: CONFIG.MAPPING,
+        version: CONFIG.VERSION,
         userEmail: Session.getActiveUser().getEmail()
     };
 }

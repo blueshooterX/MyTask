@@ -82,6 +82,19 @@
         font-size: 1.2rem;
         color: var(--primary);
         font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .version-tag {
+        font-size: 0.7rem;
+        font-weight: 400;
+        color: var(--text-muted);
+        background: var(--bg-main);
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        border: 1px solid var(--border);
     }
 
     .filter-group {
@@ -136,6 +149,70 @@
 
     .btn.secondary:hover {
         background-color: var(--border);
+    }
+
+    /* Menu & Hamburger */
+    .menu-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .menu-trigger {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        padding: 0.4rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+    }
+
+    .menu-trigger:hover {
+        background: var(--bg-main);
+        color: var(--primary);
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: var(--shadow-md);
+        min-width: 180px;
+        z-index: 1000;
+        display: none;
+        padding: 0.5rem 0;
+        margin-top: 0.5rem;
+    }
+
+    .dropdown-menu.show {
+        display: block;
+    }
+
+    .dropdown-item {
+        padding: 0.6rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-main);
+        text-decoration: none;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .dropdown-item:hover {
+        background: var(--bg-main);
+        color: var(--primary);
+    }
+
+    .dropdown-item .material-icons {
+        font-size: 1.1rem;
     }
 
     main {
@@ -266,7 +343,7 @@
         position: absolute;
         top: 0;
         left: 0;
-        width: 3px;
+        width: 6px;
         height: 100%;
     }
 
@@ -460,6 +537,40 @@
         display: none !important;
     }
 
+    /* Card Links */
+    .url-inline-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2rem;
+        background: var(--bg-main);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0 0.3rem;
+        color: var(--primary);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+        margin: 0 0.1rem;
+        vertical-align: middle;
+    }
+
+    .url-inline-link:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .url-inline-link .material-icons {
+        font-size: 1rem;
+    }
+
+    .preview-inline-icon {
+        font-size: 0.9rem !important;
+        vertical-align: middle;
+        margin-right: 0.2rem;
+        color: var(--text-muted);
+    }
+
     /* Modal & Overlay */
     .overlay {
         position: fixed;
@@ -544,7 +655,7 @@
     <div id="app">
         <header>
             <div class="header-left">
-                <h1>MyTask</h1>
+                <h1>MyTask <span id="appVersion" class="version-tag"></span></h1>
                 <div class="filter-group">
                     <select id="filterGroup">
                         <option value="">全グループ</option>
@@ -558,10 +669,20 @@
                 </div>
             </div>
             <div class="header-right">
-                <button id="importTasksBtn" class="btn secondary">Google Task 抽出</button>
-                <button id="toggleDoneBtn" class="btn secondary">完了: 非表示</button>
-                <button id="toggleDetailBtn" class="btn secondary">詳細表示</button>
+                <button id="toggleDoneBtn" class="btn secondary">完了：非表示</button>
+                <button id="toggleDetailBtn" class="btn secondary">詳細：非表示</button>
                 <button id="addTaskBtn" class="btn primary">新規タスク追加</button>
+                <div class="menu-container">
+                    <button id="menuTrigger" class="menu-trigger">
+                        <span class="material-icons">more_vert</span>
+                    </button>
+                    <div id="dropdownMenu" class="dropdown-menu">
+                        <div id="importTasksBtn" class="dropdown-item">
+                            <span class="material-icons">download</span>
+                            <span>Google Task 抽出</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -1134,7 +1255,22 @@
     <div class="card-preview"></div>
     <div class="card-content">${task.contentHtml}</div>
 `;
-        div.querySelector('.card-preview').innerText = task.contentRaw || '';
+        // Process content with icons
+        const processedHtml = (task.contentHtml || '').replace(
+            /(https?:\/\/[^\s<]+)/g,
+            (url) => {
+                const icon = getUrlIcon(url);
+                return `<a href="${url}" target="_blank" class="url-inline-link" onclick="event.stopPropagation()"><span class="material-icons">${icon}</span>${url}</a>`;
+            }
+        );
+        div.querySelector('.card-content').innerHTML = processedHtml;
+
+        // Preview also gets icons but maybe just as indicators
+        const previewText = task.contentRaw || '';
+        div.querySelector('.card-preview').innerHTML = previewText.replace(
+            /(https?:\/\/[^\s]+)/g,
+            (url) => `<span class="material-icons preview-inline-icon">${getUrlIcon(url)}</span>`
+        );
 
         // Add fade-in animation for newly moved tasks
         if (task._justCompleted) {
@@ -1249,6 +1385,14 @@
 
     function setupResizers() {
         setupColumnResizer('.resizer', '.kanban-column', document.getElementById('kanban-container'));
+    }
+
+    function getUrlIcon(url) {
+        if (url.includes('mail.google.com')) return 'email';
+        if (url.includes('drive.google.com')) return 'folder';
+        if (url.includes('calendar.google.com')) return 'calendar_today';
+        if (url.includes('meet.google.com')) return 'videocam';
+        return 'link';
     }
 </script>
 <!-- --- END js-kanban-view.html --- -->
@@ -1396,16 +1540,19 @@
         setupTaskModal();
 
         // Initial UI State check
-        if (window.updateDoneVisibility) window.updateDoneVisibility();
+        updateDoneVisibility();
+        updateDetailButton();
 
+        // Load Data and Settings
         google.script.run
             .withSuccessHandler(initialize)
             .withFailureHandler(handleError)
             .getData();
 
-        google.script.run
-            .withSuccessHandler(s => { state.mapping = s.mapping; })
-            .getSettings();
+        google.script.run.withSuccessHandler(settings => {
+            state.mapping = settings.mapping;
+            document.getElementById('appVersion').innerText = settings.version || '';
+        }).getSettings();
     };
 
     function initialize(data) {
@@ -1458,10 +1605,22 @@
         });
 
         // Toggle Detail
-        document.getElementById('toggleDetailBtn').onclick = (e) => {
+        window.updateDetailButton = () => {
+            const btn = document.getElementById('toggleDetailBtn');
+            if (state.showDetail) {
+                btn.innerText = '詳細：表示';
+                btn.classList.add('primary');
+                btn.classList.remove('secondary');
+            } else {
+                btn.innerText = '詳細：非表示';
+                btn.classList.remove('primary');
+                btn.classList.add('secondary');
+            }
+        };
+        document.getElementById('toggleDetailBtn').onclick = () => {
             state.showDetail = !state.showDetail;
-            e.target.innerText = state.showDetail ? '詳細非表示' : '詳細表示';
-            renderBoard(); // Re-render to apply class
+            updateDetailButton();
+            renderBoard();
         };
 
         // Toggle Done Column
@@ -1477,12 +1636,12 @@
 
             if (state.showDone) {
                 doneColumn.classList.remove('hidden');
-                btn.innerText = '完了: 表示';
+                btn.innerText = '完了：表示';
                 btn.classList.add('primary');
                 btn.classList.remove('secondary');
             } else {
                 doneColumn.classList.add('hidden');
-                btn.innerText = '完了: 非表示';
+                btn.innerText = '完了：非表示';
                 btn.classList.remove('primary');
                 btn.classList.add('secondary');
             }
@@ -1498,6 +1657,7 @@
 
         // Import Google Tasks
         document.getElementById('importTasksBtn').onclick = () => {
+            document.getElementById('dropdownMenu').classList.remove('show');
             showLoading('loading-overlay', true);
             google.script.run
                 .withSuccessHandler(res => {
@@ -1506,6 +1666,17 @@
                 })
                 .withFailureHandler(handleError)
                 .importFromGoogleTasks();
+        };
+
+        // Menu Toggle
+        const menuTrigger = document.getElementById('menuTrigger');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        menuTrigger.onclick = (e) => {
+            e.stopPropagation();
+            dropdownMenu.classList.toggle('show');
+        };
+        window.onclick = () => {
+            dropdownMenu.classList.remove('show');
         };
     }
 
