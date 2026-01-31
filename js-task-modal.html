@@ -3,6 +3,8 @@
      * Task Modal Logic
      */
 
+    let openedTaskData = null;
+
     function setupTaskModal() {
         // Modal events
         const modal = document.getElementById('taskModal');
@@ -63,9 +65,20 @@
             RichTextEditor.setHtml('editor', task.contentHtml);
             document.getElementById('taskDueDateInput').value = task.dueDate ? task.dueDate.split('T')[0] : '';
             document.getElementById('taskStatusInput').value = task.status;
+
+            // Keep original data for change detection
+            openedTaskData = {
+                group: task.group,
+                priority: task.priority,
+                title: task.title,
+                contentHtml: task.contentHtml,
+                dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
+                status: task.status
+            };
         } else {
             title.innerText = '新規タスク追加';
             document.getElementById('taskId').value = '';
+            openedTaskData = null;
         }
 
         modal.classList.add('show');
@@ -81,8 +94,21 @@
             contentHtml: RichTextEditor.getHtml('editor'),
             contentRaw: RichTextEditor.getRawText('editor'),
             dueDate: document.getElementById('taskDueDateInput').value,
-            status: document.getElementById('taskStatusInput').value
+            status: document.getElementById('taskStatusInput').value,
+            _contentModified: !openedTaskData || RichTextEditor.getHtml('editor') !== openedTaskData.contentHtml
         };
+
+        // If nothing changed, just close modal
+        if (openedTaskData &&
+            task.group === openedTaskData.group &&
+            task.priority === openedTaskData.priority &&
+            task.title === openedTaskData.title &&
+            task.contentHtml === openedTaskData.contentHtml &&
+            task.dueDate === openedTaskData.dueDate &&
+            task.status === openedTaskData.status) {
+            document.getElementById('taskModal').classList.remove('show');
+            return;
+        }
 
         showLoading('loading-overlay', true);
         google.script.run

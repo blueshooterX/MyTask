@@ -11,12 +11,12 @@
         --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         --radius: 12px;
 
-        --priority-high: #FEE2E2;
-        --priority-high-text: #EF4444;
-        --priority-middle: #FEF3C7;
-        --priority-middle-text: #F59E0B;
-        --priority-low: #F0F9FF;
-        --priority-low-text: #3B82F6;
+        --priority-high: #C86B6B;
+        --priority-high-text: #7F1D1D;
+        --priority-middle: #D9B061;
+        --priority-middle-text: #92400E;
+        --priority-low: #75A795;
+        --priority-low-text: #166534;
     }
 
     * {
@@ -335,15 +335,15 @@
     }
 
     .task-card.priority-high::before {
-        background: #ef4444;
+        background: var(--priority-high);
     }
 
     .task-card.priority-middle::before {
-        background: #f59e0b;
+        background: var(--priority-middle);
     }
 
     .task-card.priority-low::before {
-        background: #22c55e;
+        background: var(--priority-low);
     }
 
     .task-card:hover {
