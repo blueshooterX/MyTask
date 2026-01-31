@@ -35,7 +35,7 @@ const CONFIG = {
             '低': 'low'
         }
     },
-    VERSION: 'v1.1.1'
+    VERSION: 'v1.11'
 };
 
 /* --- END AppConfig.js.sample --- */
