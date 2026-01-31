@@ -24,12 +24,12 @@
         --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         --radius: 12px;
 
-        --priority-high: #FEE2E2;
-        --priority-high-text: #EF4444;
-        --priority-middle: #FEF3C7;
-        --priority-middle-text: #F59E0B;
-        --priority-low: #F0F9FF;
-        --priority-low-text: #3B82F6;
+        --priority-high: #C86B6B;
+        --priority-high-text: #7F1D1D;
+        --priority-middle: #D9B061;
+        --priority-middle-text: #92400E;
+        --priority-low: #75A795;
+        --priority-low-text: #166534;
     }
 
     * {
@@ -348,15 +348,15 @@
     }
 
     .task-card.priority-high::before {
-        background: #ef4444;
+        background: var(--priority-high);
     }
 
     .task-card.priority-middle::before {
-        background: #f59e0b;
+        background: var(--priority-middle);
     }
 
     .task-card.priority-low::before {
-        background: #22c55e;
+        background: var(--priority-low);
     }
 
     .task-card:hover {
@@ -1404,6 +1404,8 @@
      * Task Modal Logic
      */
 
+    let openedTaskData = null;
+
     function setupTaskModal() {
         // Modal events
         const modal = document.getElementById('taskModal');
@@ -1464,9 +1466,20 @@
             RichTextEditor.setHtml('editor', task.contentHtml);
             document.getElementById('taskDueDateInput').value = task.dueDate ? task.dueDate.split('T')[0] : '';
             document.getElementById('taskStatusInput').value = task.status;
+
+            // Keep original data for change detection
+            openedTaskData = {
+                group: task.group,
+                priority: task.priority,
+                title: task.title,
+                contentHtml: task.contentHtml,
+                dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
+                status: task.status
+            };
         } else {
             title.innerText = '新規タスク追加';
             document.getElementById('taskId').value = '';
+            openedTaskData = null;
         }
 
         modal.classList.add('show');
@@ -1482,8 +1495,21 @@
             contentHtml: RichTextEditor.getHtml('editor'),
             contentRaw: RichTextEditor.getRawText('editor'),
             dueDate: document.getElementById('taskDueDateInput').value,
-            status: document.getElementById('taskStatusInput').value
+            status: document.getElementById('taskStatusInput').value,
+            _contentModified: !openedTaskData || RichTextEditor.getHtml('editor') !== openedTaskData.contentHtml
         };
+
+        // If nothing changed, just close modal
+        if (openedTaskData &&
+            task.group === openedTaskData.group &&
+            task.priority === openedTaskData.priority &&
+            task.title === openedTaskData.title &&
+            task.contentHtml === openedTaskData.contentHtml &&
+            task.dueDate === openedTaskData.dueDate &&
+            task.status === openedTaskData.status) {
+            document.getElementById('taskModal').classList.remove('show');
+            return;
+        }
 
         showLoading('loading-overlay', true);
         google.script.run

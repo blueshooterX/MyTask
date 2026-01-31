@@ -35,7 +35,7 @@ const CONFIG = {
             '低': 'low'
         }
     },
-    VERSION: 'v1.1.0'
+    VERSION: 'v1.1.1'
 };
 
 /* --- END AppConfig.js.sample --- */
@@ -316,19 +316,21 @@ function saveTask(task) {
     const data = sheet.getDataRange().getValues();
 
     let rowIndex = -1;
+    let existingTask = null;
+
     if (task.id) {
         for (let i = 1; i < data.length; i++) {
             if (data[i][CONFIG.COLUMNS.ID] == task.id) {
                 rowIndex = i + 1;
+                existingTask = data[i];
                 break;
             }
         }
     }
 
-    const richTextValue = htmlToRichText(task.contentHtml, task.contentRaw || '');
-
     if (rowIndex === -1) {
         // New
+        const richTextValue = htmlToRichText(task.contentHtml, task.contentRaw || '');
         const nextId = getNextId(data);
         const nextNo = getNextNo(data, task.status);
         const newRow = [];
@@ -344,24 +346,65 @@ function saveTask(task) {
 
         sheet.appendRow(newRow);
         rowIndex = sheet.getLastRow();
+        sheet.getRange(rowIndex, CONFIG.COLUMNS.CONTENT + 1).setRichTextValue(richTextValue);
     } else {
         // Update
-        // Ensure we cover up to the LABEL column
-        const outputCols = Math.max(sheet.getLastColumn(), CONFIG.COLUMNS.LABEL + 1);
-        const range = sheet.getRange(rowIndex, 1, 1, outputCols);
-        const vals = range.getValues()[0];
+        // Update
+        const updatesLeft = {};
+        const updatesRight = {};
+        let contentChanged = false;
 
-        vals[CONFIG.COLUMNS.GROUP] = task.group;
-        vals[CONFIG.COLUMNS.TITLE] = task.title;
-        vals[CONFIG.COLUMNS.CONTENT] = task.contentRaw;
-        vals[CONFIG.COLUMNS.DUE_DATE] = task.dueDate ? new Date(task.dueDate) : '';
-        vals[CONFIG.COLUMNS.PRIORITY] = task.priority;
-        vals[CONFIG.COLUMNS.STATUS] = task.status;
-        vals[CONFIG.COLUMNS.LABEL] = task.label;
-        range.setValues([vals]);
+        // Check Left Block (Group, Title)
+        if (existingTask[CONFIG.COLUMNS.GROUP] !== task.group) updatesLeft[CONFIG.COLUMNS.GROUP] = task.group;
+        if (existingTask[CONFIG.COLUMNS.TITLE] !== task.title) updatesLeft[CONFIG.COLUMNS.TITLE] = task.title;
+
+        // Check Content
+        if (task._contentModified || existingTask[CONFIG.COLUMNS.CONTENT] !== task.contentRaw) {
+            contentChanged = true;
+        }
+
+        // Check Right Block (Due Date, Priority, Status, Label)
+        const existingDueDate = existingTask[CONFIG.COLUMNS.DUE_DATE] instanceof Date ? existingTask[CONFIG.COLUMNS.DUE_DATE].toISOString().split('T')[0] : '';
+        const newDueDate = task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '';
+
+        // Note: For right block, if ANY changed, we write ALL in the block to simple batching
+        // Or we check individually? Batching requires writing the whole range or constructing a range.
+        // Simplest batch: If any in Group/Title changed, write Group/Title.
+        // If any in Due/Pri/Stat/Label changed, write that block.
+
+        let writeLeft = false;
+        if (Object.keys(updatesLeft).length > 0) writeLeft = true;
+
+        let writeRight = false;
+        if (existingDueDate !== newDueDate ||
+            existingTask[CONFIG.COLUMNS.PRIORITY] !== task.priority ||
+            existingTask[CONFIG.COLUMNS.STATUS] !== task.status ||
+            existingTask[CONFIG.COLUMNS.LABEL] !== task.label) {
+            writeRight = true;
+        }
+
+        // Apply Updates
+        if (writeLeft) {
+            // Group(2), Title(3)
+            sheet.getRange(rowIndex, CONFIG.COLUMNS.GROUP + 1, 1, 2)
+                .setValues([[task.group, task.title]]);
+        }
+
+        if (contentChanged) {
+            // Content(4)
+            // Write raw first (optional if setting rich text immediately, but good for consistency)
+            sheet.getRange(rowIndex, CONFIG.COLUMNS.CONTENT + 1).setValue(task.contentRaw);
+            const richTextValue = htmlToRichText(task.contentHtml, task.contentRaw || '');
+            sheet.getRange(rowIndex, CONFIG.COLUMNS.CONTENT + 1).setRichTextValue(richTextValue);
+        }
+
+        if (writeRight) {
+            // Due(5), Priority(6), Status(7), Label(8)
+            const dateVal = task.dueDate ? new Date(task.dueDate) : '';
+            sheet.getRange(rowIndex, CONFIG.COLUMNS.DUE_DATE + 1, 1, 4)
+                .setValues([[dateVal, task.priority, task.status, task.label]]);
+        }
     }
-
-    sheet.getRange(rowIndex, CONFIG.COLUMNS.CONTENT + 1).setRichTextValue(richTextValue);
 
     return { success: true, id: task.id || data.length };
 }
