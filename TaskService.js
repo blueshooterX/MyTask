@@ -83,6 +83,8 @@ function saveTask(task) {
 
     let rowIndex = -1;
     let existingTask = null;
+    let nextId = null;
+    let nextNo = null;
 
     if (task.id) {
         for (let i = 1; i < data.length; i++) {
@@ -95,84 +97,68 @@ function saveTask(task) {
     }
 
     if (rowIndex === -1) {
-        // New
-        const richTextValue = htmlToRichText(task.contentHtml, task.contentRaw || '');
-        const nextId = getNextId(data);
-        const nextNo = getNextNo(data, task.status);
-        const newRow = [];
-        newRow[CONFIG.COLUMNS.ID] = nextId;
-        newRow[CONFIG.COLUMNS.DISPLAY_NO] = nextNo;
-        newRow[CONFIG.COLUMNS.GROUP] = task.group;
-        newRow[CONFIG.COLUMNS.TITLE] = task.title;
-        newRow[CONFIG.COLUMNS.CONTENT] = task.contentRaw;
-        newRow[CONFIG.COLUMNS.DUE_DATE] = task.dueDate ? new Date(task.dueDate) : '';
-        newRow[CONFIG.COLUMNS.PRIORITY] = task.priority;
-        newRow[CONFIG.COLUMNS.STATUS] = task.status;
-        newRow[CONFIG.COLUMNS.LABEL] = task.label;
+        // New: Prepare IDs
+        nextId = getNextId(data);
+        nextNo = getNextNo(data, task.status);
 
-        sheet.appendRow(newRow);
-        rowIndex = sheet.getLastRow();
-        sheet.getRange(rowIndex, CONFIG.COLUMNS.CONTENT + 1).setRichTextValue(richTextValue);
-    } else {
-        // Update
-        // Update
-        const updatesLeft = {};
-        const updatesRight = {};
-        let contentChanged = false;
+        // Append placeholder row to get valid rowIndex
+        // We could just calculate index = lastRow + 1, but safely appending ensures structure
+        // Actually, we can just write to lastRow + 1 without verify? 
+        // Sheet.appendRow is safe. But we want to use setValues for consistency.
+        // Let's calculate target row index.
+        rowIndex = sheet.getLastRow() + 1;
+    }
 
-        // Check Left Block (Group, Title)
-        if (existingTask[CONFIG.COLUMNS.GROUP] !== task.group) updatesLeft[CONFIG.COLUMNS.GROUP] = task.group;
-        if (existingTask[CONFIG.COLUMNS.TITLE] !== task.title) updatesLeft[CONFIG.COLUMNS.TITLE] = task.title;
+    // Common Write Logic (New and Update)
+    // 1. Prepare Values
+    const newRowValues = [];
+    newRowValues[CONFIG.COLUMNS.ID] = task.id || nextId;
+    newRowValues[CONFIG.COLUMNS.DISPLAY_NO] = task.no !== undefined ? task.no : nextNo;
+    newRowValues[CONFIG.COLUMNS.GROUP] = task.group;
+    newRowValues[CONFIG.COLUMNS.TITLE] = task.title;
+    newRowValues[CONFIG.COLUMNS.CONTENT] = task.contentRaw || '';
+    newRowValues[CONFIG.COLUMNS.DUE_DATE] = task.dueDate ? new Date(task.dueDate) : '';
+    newRowValues[CONFIG.COLUMNS.PRIORITY] = task.priority;
+    newRowValues[CONFIG.COLUMNS.STATUS] = task.status;
+    newRowValues[CONFIG.COLUMNS.LABEL] = task.label;
 
-        // Check Content
-        if (task._contentModified || existingTask[CONFIG.COLUMNS.CONTENT] !== task.contentRaw) {
-            contentChanged = true;
-        }
+    // 2. Write Values (All columns) - 1st API Call
+    sheet.getRange(rowIndex, 1, 1, newRowValues.length).setValues([newRowValues]);
 
-        // Check Right Block (Due Date, Priority, Status, Label)
-        const existingDueDate = existingTask[CONFIG.COLUMNS.DUE_DATE] instanceof Date ? existingTask[CONFIG.COLUMNS.DUE_DATE].toISOString().split('T')[0] : '';
-        const newDueDate = task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '';
-
-        // Note: For right block, if ANY changed, we write ALL in the block to simple batching
-        // Or we check individually? Batching requires writing the whole range or constructing a range.
-        // Simplest batch: If any in Group/Title changed, write Group/Title.
-        // If any in Due/Pri/Stat/Label changed, write that block.
-
-        let writeLeft = false;
-        if (Object.keys(updatesLeft).length > 0) writeLeft = true;
-
-        let writeRight = false;
-        if (existingDueDate !== newDueDate ||
-            existingTask[CONFIG.COLUMNS.PRIORITY] !== task.priority ||
-            existingTask[CONFIG.COLUMNS.STATUS] !== task.status ||
-            existingTask[CONFIG.COLUMNS.LABEL] !== task.label) {
-            writeRight = true;
-        }
-
-        // Apply Updates
-        if (writeLeft) {
-            // Group(2), Title(3)
-            sheet.getRange(rowIndex, CONFIG.COLUMNS.GROUP + 1, 1, 2)
-                .setValues([[task.group, task.title]]);
-        }
-
-        if (contentChanged) {
-            // Content(4)
-            // Write raw first (optional if setting rich text immediately, but good for consistency)
-            sheet.getRange(rowIndex, CONFIG.COLUMNS.CONTENT + 1).setValue(task.contentRaw);
-            const richTextValue = htmlToRichText(task.contentHtml, task.contentRaw || '');
-            sheet.getRange(rowIndex, CONFIG.COLUMNS.CONTENT + 1).setRichTextValue(richTextValue);
-        }
-
-        if (writeRight) {
-            // Due(5), Priority(6), Status(7), Label(8)
-            const dateVal = task.dueDate ? new Date(task.dueDate) : '';
-            sheet.getRange(rowIndex, CONFIG.COLUMNS.DUE_DATE + 1, 1, 4)
-                .setValues([[dateVal, task.priority, task.status, task.label]]);
-        }
+    // 3. Write Rich Text (Content only) - 2nd API Call (if needed)
+    if (task.richTextData || task.contentHtml) {
+        const rtv = task.richTextData ? buildRichTextFromData(task.richTextData) : htmlToRichText(task.contentHtml, task.contentRaw || '');
+        sheet.getRange(rowIndex, CONFIG.COLUMNS.CONTENT + 1).setRichTextValue(rtv);
     }
 
     return { success: true, id: task.id || data.length };
+}
+
+/**
+ * Build RichTextValue from client-side data
+ */
+function buildRichTextFromData(data) {
+    if (!data || !data.text) return SpreadsheetApp.newRichTextValue().setText('').build();
+
+    const builder = SpreadsheetApp.newRichTextValue().setText(data.text);
+    if (data.runs) {
+        data.runs.forEach(run => {
+            const style = SpreadsheetApp.newTextStyle();
+            if (run.style.bold) style.setBold(true);
+            if (run.style.italic) style.setItalic(true);
+            if (run.style.underline) style.setUnderline(true);
+            if (run.style.strikethrough) style.setStrikethrough(true);
+            if (run.style.color) style.setForegroundColor(run.style.color);
+
+            // Validate range
+            const start = Math.max(0, Math.min(run.start, data.text.length));
+            const end = Math.max(0, Math.min(run.end, data.text.length));
+            if (start < end) {
+                builder.setTextStyle(start, end, style.build());
+            }
+        });
+    }
+    return builder.build();
 }
 
 /**

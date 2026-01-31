@@ -93,6 +93,7 @@
             title: document.getElementById('taskTitleInput').value,
             contentHtml: RichTextEditor.getHtml('editor'),
             contentRaw: RichTextEditor.getRawText('editor'),
+            richTextData: RichTextEditor.getRichTextData('editor'),
             dueDate: document.getElementById('taskDueDateInput').value,
             status: document.getElementById('taskStatusInput').value,
             _contentModified: !openedTaskData || RichTextEditor.getHtml('editor') !== openedTaskData.contentHtml
