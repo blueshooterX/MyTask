@@ -13,6 +13,7 @@ GAS (Google Apps Script) + Google Sheets で動作する、完全無料・プラ
 - **リッチテキスト同期**: 太字や文字色が、Webアプリとスプレッドシート間で双方向に完全同期。
 - **Google Tasks 連携**: カレンダーのタスクを一括インポート。
 - **モダンなUI**: Glassmorphism を取り入れた、GASとは思えないリッチなデザイン。
+- **レイアウト調整**: カラム幅のドラッグリサイズや、表示・非表示のトグル機能。
 
 ## Requirement
 
@@ -23,19 +24,21 @@ GAS (Google Apps Script) + Google Sheets で動作する、完全無料・プラ
 
 ### 1. スプレッドシートの準備
 1. 新規スプレッドシートを作成します。
-2. デフォルトのシート名を `MasterData` に変更します。
+2. デフォルトのシート名を `AccessControl` に変更します。
 3. A列に、アプリへのアクセスを許可するメールアドレスを入力します。
    - `A1: your-email@example.com`
 4. スプレッドシートの ID (URLの `/d/` と `/edit` の間の文字列) を控えておきます。
 
+> **Note**: `TaskList` シートはアプリの初回起動時に自動生成されます。
+
 ### 2. GASプロジェクトの作成
 1. Google Drive で「Google Apps Script」プロジェクトを新規作成します。
-2. 以下のファイルをプロジェクトに追加・上書きします。
-   - `Code.js` -> `Code.gs`
+2. 本リポジトリの `dist` フォルダ内にある以下のファイルをプロジェクトに追加・上書きします（`bundler.js` を実行することで生成されます）。
+   - `Code.gs` (GASエディタ上の `コード.gs`)
    - `index.html`
-   - `appsscript.json` (プロジェクト設定からマニフェストファイルを表示して上書き)
-   
-   ※ `dist` フォルダ内のファイルを使用するか、`clasp` でプッシュしてください。
+3. プロジェクト設定から「appsscript.json マニフェストファイルをエディタで表示する」にチェックを入れ、`appsscript.json` の内容を上書きします。
+
+※ 開発環境がある場合は `clasp` も利用可能です。
 
 ### 3. 設定ファイルの更新
 1. `AppConfig.js.sample` を `AppConfig.js` にリネームします。
@@ -77,7 +80,16 @@ clasp create --type webapp --title "MyTask"
 clasp clone <scriptId>
 ```
 
-### Deploy
+### Build & Bundle
+
+複数のソースファイルを1つの `Code.gs` と `index.html` にまとめます。
+
+```bash
+node bundler.js
+```
+生成された `dist/` 配下のファイルをGASエディタへ貼り付けてください。
+
+### Deploy (clasp)
 ```bash
 # Push Code
 clasp push
