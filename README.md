@@ -1,10 +1,11 @@
 # MyTask
 
-GAS (Google Apps Script) + Google Sheets で動作する、完全無料・プライベートなカンバンタスク管理アプリケーションです。
-既存のツールに満足できないエンジニアが、**「スプレッドシートをDBにする」** というアプローチで自作しました。
+GAS (Google Apps Script) + Google Sheets で動作する、カンバンタスク管理アプリケーションです。
+**データ保存はスプレッドシートでシンプルに、見た目は分かりやすく扱いやすいWebアプリにする** というアプローチで、生成AIと壁打ちして作成しました。
 
-![Demo](https://dummy-image-url/demo.gif)
-*(※ここにデモGIFなどを貼ると分かりやすいです)*
+Webアプリの画面とスプレッドシート(データ)の画面
+![Webアプリサンプル](image/13_testdata_webapp.png)
+![スプレッドシートサンプル](image/13_testdata_spreadsheet.png)
 
 ## Features
 
@@ -26,7 +27,7 @@ GAS (Google Apps Script) + Google Sheets で動作する、完全無料・プラ
 1. 新規スプレッドシートを作成します。
 2. デフォルトのシート名を `AccessControl` に変更します。
 3. A列に、アプリへのアクセスを許可するメールアドレスを入力します。
-   - `A1: your-email@example.com`
+   - `A1: xxxxx@yyy.zzz`
 
    ![スプレッドシート作成](image/01_create_spreadsheet.png)
 4. スプレッドシートの ID (URLの `/d/` と `/edit` の間の文字列) を控えておきます。
@@ -40,19 +41,21 @@ GAS (Google Apps Script) + Google Sheets で動作する、完全無料・プラ
 
 1. Google Drive で「Google Apps Script」プロジェクトを新規作成します。
    ![GASプロジェクト作成](image/03_create_script.png)
-2. 本リポジトリの `dist` フォルダ内にある以下のファイルをプロジェクトに追加・上書きします（`bundler.js` を実行することで生成されます）。
+2. 本リポジトリの `dist` フォルダ内にある以下のファイルをプロジェクトに追加・上書きします（dist内のファイルの生成は末尾のBuild & Bundleを参照）。
    - `Code.gs` (GASエディタ上の `コード.gs`)
-    `dist`フォルダ内の`Code.gs`の内容を貼り付けてください。
+      - `dist`フォルダ内の`Code.gs`の内容を貼り付けてください。
    ![GASプロジェクト作成](image/04_paste_code.png)
    - `index.html`
-    ファイルの横の＋を押してHTMLを選択し、ファイル名を"index"にしてください。
-   ![GASプロジェクト作成](image/05_add_html.png)
-   ![GASプロジェクト作成](image/05_add_html2.png)
-   　`dist`フォルダ内の`index.html`の内容を貼り付けてください。
-   ![GASプロジェクト作成](image/05_add_html3.png)
-3. プロジェクト設定から「appsscript.json マニフェストファイルをエディタで表示する」にチェックを入れます。
+      - ファイルの横の＋を押してHTMLを選択します。
+      ![GASプロジェクト作成](image/05_add_html.png)
+      - ファイル名を"index"にしてください。
+      ![GASプロジェクト作成](image/05_add_html2.png)
+      - `dist`フォルダ内の`index.html`の内容を貼り付けてください。
+      ![GASプロジェクト作成](image/05_add_html3.png)
+3. リポジトリのルートディレクトリにある`appscript.json`の内容を設定
+   - プロジェクト設定から「appsscript.json マニフェストファイルをエディタで表示する」にチェックを入れます。
    ![GASプロジェクト作成](image/06_gas_setting.png)
-ファイルにappsscript.json`が表示されているので、その内容を全て書き換える形で上書きします。
+   - ファイルにappsscript.json`が表示されているので、その内容を全て書き換える形で上書きします。
    ![GASプロジェクト作成](image/06_gas_setting2.png)
 
 ### 3. 設定ファイルの更新
@@ -75,13 +78,14 @@ const CONFIG = {
 3. 次のユーザーとして実行: 「自分」。
 4. アクセスできるユーザー: 「全員」または「自分のみ」。
    ![デプロイ](image/08_deploy3.png)
-5. 権限の許可を求められるので、「アクセスを承認する」を押して許可する。
+5. 権限の許可
+   - 以下の画面が表示されたら、「アクセスを承認する」を押して許可する。
    ![権限設定](image/09_permission1.png)
-   「Advanced」を押す。
+   - 「Advanced」を押す。
    ![権限設定](image/09_permission2.png)
-   「Go to <設定した名称> (unsafe)」を押す。
+   - 「Go to <設定した名称> (unsafe)」を押す。
    ![権限設定](image/09_permission3.png)
-   Google Spread SheetとTaskへのアクセス権限許可を確認されるので、「Select all」にチェックを入れ （または個別にチェック）「Continue」を押す。
+   - Google Spread SheetとTaskへのアクセス権限許可を確認されるので、「Select all」にチェックを入れ （または個別にチェック）「Continue」を押す。
    ![権限設定](image/09_permission4.png)
 6. 発行されたウェブアプリURLにアクセス！
    ![デプロイ](image/10_complete_deploy.png)
