@@ -9,8 +9,8 @@
  */
 const CONFIG = {
     SPREADSHEET_ID: 'YOUR_SPREADSHEET_ID_HERE', // TODO: Replace with your actual Spreadsheet ID
-    SHEET_NAME: 'TaskData',
-    MASTER_SHEET_NAME: 'MasterData',
+    SHEET_NAME: 'TaskList',
+    MASTER_SHEET_NAME: 'AccessControl',
     COLUMNS: {
         ID: 0,
         DISPLAY_NO: 1,
@@ -35,7 +35,7 @@ const CONFIG = {
             '低': 'low'
         }
     },
-    VERSION: 'v1.2.1'
+    VERSION: 'v1.3.0'
 };
 
 /* --- END AppConfig.js.sample --- */
@@ -347,14 +347,24 @@ function saveTask(task) {
     // 1. Prepare Values
     const newRowValues = [];
     newRowValues[CONFIG.COLUMNS.ID] = task.id || nextId;
-    newRowValues[CONFIG.COLUMNS.DISPLAY_NO] = task.no !== undefined ? task.no : nextNo;
+
+    let displayNo = task.no;
+    if (displayNo === undefined) {
+        if (existingTask) {
+            displayNo = (existingTask[CONFIG.COLUMNS.STATUS] === task.status) ? existingTask[CONFIG.COLUMNS.DISPLAY_NO] : getNextNo(data, task.status);
+        } else {
+            displayNo = nextNo;
+        }
+    }
+    newRowValues[CONFIG.COLUMNS.DISPLAY_NO] = displayNo;
+
     newRowValues[CONFIG.COLUMNS.GROUP] = task.group;
     newRowValues[CONFIG.COLUMNS.TITLE] = task.title;
     newRowValues[CONFIG.COLUMNS.CONTENT] = task.contentRaw || '';
     newRowValues[CONFIG.COLUMNS.DUE_DATE] = task.dueDate ? new Date(task.dueDate) : '';
     newRowValues[CONFIG.COLUMNS.PRIORITY] = task.priority;
     newRowValues[CONFIG.COLUMNS.STATUS] = task.status;
-    newRowValues[CONFIG.COLUMNS.LABEL] = task.label;
+    newRowValues[CONFIG.COLUMNS.LABEL] = task.label !== undefined ? task.label : (existingTask ? existingTask[CONFIG.COLUMNS.LABEL] : '');
 
     // 2. Write Values (All columns) - 1st API Call
     sheet.getRange(rowIndex, 1, 1, newRowValues.length).setValues([newRowValues]);
