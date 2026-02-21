@@ -30,34 +30,61 @@ GAS (Google Apps Script) + Google Sheets で動作する、完全無料・プラ
 
    ![スプレッドシート作成](image/01_create_spreadsheet.png)
 4. スプレッドシートの ID (URLの `/d/` と `/edit` の間の文字列) を控えておきます。
+   ![スプレッドシートID](image/02_spreadsheet_id.png)
 
 > **Note**: `TaskList` シートはアプリの初回起動時に自動生成されます。
 
 ### 2. GASプロジェクトの作成
+
+※ `clasp`の利用ができる方は、末尾のデプロイ手順を参考にしてください。
+
 1. Google Drive で「Google Apps Script」プロジェクトを新規作成します。
+   ![GASプロジェクト作成](image/03_create_script.png)
 2. 本リポジトリの `dist` フォルダ内にある以下のファイルをプロジェクトに追加・上書きします（`bundler.js` を実行することで生成されます）。
    - `Code.gs` (GASエディタ上の `コード.gs`)
+    `dist`フォルダ内の`Code.gs`の内容を貼り付けてください。
+   ![GASプロジェクト作成](image/04_paste_code.png)
    - `index.html`
-3. プロジェクト設定から「appsscript.json マニフェストファイルをエディタで表示する」にチェックを入れ、`appsscript.json` の内容を上書きします。
-
-※ 開発環境がある場合は `clasp` も利用可能です。
+    ファイルの横の＋を押してHTMLを選択し、ファイル名を"index"にしてください。
+   ![GASプロジェクト作成](image/05_add_html.png)
+   ![GASプロジェクト作成](image/05_add_html2.png)
+   　`dist`フォルダ内の`index.html`の内容を貼り付けてください。
+   ![GASプロジェクト作成](image/05_add_html3.png)
+3. プロジェクト設定から「appsscript.json マニフェストファイルをエディタで表示する」にチェックを入れます。
+   ![GASプロジェクト作成](image/06_gas_setting.png)
+ファイルにappsscript.json`が表示されているので、その内容を全て書き換える形で上書きします。
+   ![GASプロジェクト作成](image/06_gas_setting2.png)
 
 ### 3. 設定ファイルの更新
-1. ファイルを個別に登録した場合は、`AppConfig.js.sample` を `AppConfig.js` にリネームします。(※`Code.js`で直接書き込んだ場合は不要です)
+1. ファイルを個別に登録した場合は、`AppConfig.js.sample` を `AppConfig.js` にリネームします。(※`コード.js`へ直接書き込んだ場合は不要です)
 2. `SPREADSHEET_ID` を手順1で控えたIDに書き換えます。
+　(コード.gsの最初の方にあります。AppConfig.jsも同様です。)
 
 ```javascript
 const CONFIG = {
     SPREADSHEET_ID: 'YOUR_SPREADSHEET_ID_HERE', 
     // ...
 ```
+   ![スプレッドシートID設定](image/07_set_spreadsheet_ID.png)
 
 ### 4. デプロイ
 1. GASエディタ右上の「デプロイ」→「新しいデプロイ」を選択。
+   ![デプロイ](image/08_deploy1.png)
 2. 種類: 「ウェブアプリ」。
+   ![デプロイ](image/08_deploy2.png)
 3. 次のユーザーとして実行: 「自分」。
 4. アクセスできるユーザー: 「全員」または「自分のみ」。
-5. 発行されたURLにアクセス！
+   ![デプロイ](image/08_deploy3.png)
+5. 権限の許可を求められるので、「アクセスを承認する」を押して許可する。
+   ![権限設定](image/09_permission1.png)
+   「Advanced」を押す。
+   ![権限設定](image/09_permission2.png)
+   「Go to <設定した名称> (unsafe)」を押す。
+   ![権限設定](image/09_permission3.png)
+   Google Spread SheetとTaskへのアクセス権限許可を確認されるので、「Select all」にチェックを入れ （または個別にチェック）「Continue」を押す。
+   ![権限設定](image/09_permission4.png)
+6. 発行されたウェブアプリURLにアクセス！
+   ![デプロイ](image/10_complete_deploy.png)
 
 ## Development(claspによるデプロイ)
 
