@@ -27,7 +27,8 @@ GAS (Google Apps Script) + Google Sheets で動作する、完全無料・プラ
 2. デフォルトのシート名を `AccessControl` に変更します。
 3. A列に、アプリへのアクセスを許可するメールアドレスを入力します。
    - `A1: your-email@example.com`
-   ![スプレッドシート作成](https://private-user-images.githubusercontent.com/1687923/552958867-49d54280-c5da-4fe5-b750-10b31bae4fec.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzE2MzYzNTQsIm5iZiI6MTc3MTYzNjA1NCwicGF0aCI6Ii8xNjg3OTIzLzU1Mjk1ODg2Ny00OWQ1NDI4MC1jNWRhLTRmZTUtYjc1MC0xMGIzMWJhZTRmZWMucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDI2MDIyMSUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyNjAyMjFUMDEwNzM0WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9YWZmNTA3NTcyYmM1ODM5MWM1YWVlNmYyOWI3NTgzZTM0ZDMyZWQyNWI4NzlkZDg0NTFkOTdlODg1YjY1NWU5YSZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QifQ.BCKIHXQZWYg64s-rzW6UtUONJvsD0FSNeldY3s1-Esg)
+
+   ![スプレッドシート作成](image/01_create_spreadsheet.png)
 4. スプレッドシートの ID (URLの `/d/` と `/edit` の間の文字列) を控えておきます。
 
 > **Note**: `TaskList` シートはアプリの初回起動時に自動生成されます。
