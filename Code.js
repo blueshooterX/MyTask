@@ -5,6 +5,14 @@
 /**
  * Initialization & HTML Delivery
  */
+/**
+ * MyTask
+ * https://github.com/blueshooterX/MyTask
+ * 
+ * Copyright (c) 2026 blueshooterX
+ * Licensed under the MIT License.
+ */
+
 function doGet() {
   if (!checkAccess()) {
     return HtmlService.createHtmlOutput('Access Denied. You are not authorized to access this application.');

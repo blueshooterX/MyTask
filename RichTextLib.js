@@ -1,4 +1,12 @@
 /**
+ * MyTask
+ * https://github.com/blueshooterX/MyTask
+ * 
+ * Copyright (c) 2026 blueshooterX
+ * Licensed under the MIT License.
+ */
+
+/**
  * RichText Conversion Library
  * 
  * Provides utility functions to convert between Google Sheets RichTextValue

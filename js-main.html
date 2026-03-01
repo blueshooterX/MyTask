@@ -1,3 +1,11 @@
+<!--
+  MyTask
+  https://github.com/blueshooterX/MyTask
+  
+  Copyright (c) 2026 blueshooterX
+  Licensed under the MIT License.
+-->
+
 <script>
     /**
      * Main Client Controller
@@ -19,10 +27,9 @@
 
     // Initial Load
     window.onload = () => {
-        showLoading('loading-overlay', true);
         RichTextEditor.init('editor', 'editorToolbar');
         setupEventListeners();
-        setupSortable(); // Move potentially static setups here
+        setupSortable();
         setupResizers();
         setupTaskModal();
 
@@ -31,10 +38,7 @@
         updateDetailButton();
 
         // Load Data and Settings
-        google.script.run
-            .withSuccessHandler(initialize)
-            .withFailureHandler(handleError)
-            .getData();
+        refreshData(); // handles showLoading internally
 
         google.script.run.withSuccessHandler(settings => {
             state.mapping = settings.mapping;
@@ -46,13 +50,15 @@
         state.tasks = data;
         updateDataLists();
         renderBoard();
-        // Event listeners and static setups moved to window.onload to prevent duplication and state reset
-        showLoading('loading-overlay', false);
     }
 
-    function refreshData() {
+    function refreshData(silent = false) {
+        if (!silent) showLoading('loading-overlay', true);
         google.script.run
-            .withSuccessHandler(initialize)
+            .withSuccessHandler(data => {
+                initialize(data);
+                showLoading('loading-overlay', false);
+            })
             .withFailureHandler(handleError)
             .getData();
     }

@@ -1,3 +1,11 @@
+<!--
+  MyTask
+  https://github.com/blueshooterX/MyTask
+  
+  Copyright (c) 2026 blueshooterX
+  Licensed under the MIT License.
+-->
+
 <script>
     /**
      * Kanban View Logic
@@ -140,7 +148,10 @@
             e.target.innerText = nextLabel;
             e.target.className = `card-label ${task.label ? 'active' : 'inactive'}`;
 
-            google.script.run.withFailureHandler(handleError).saveTask(task);
+            google.script.run
+                .withSuccessHandler(() => refreshData(true))
+                .withFailureHandler(handleError)
+                .saveTask(task);
         };
 
         // Check Click
@@ -156,7 +167,10 @@
                     task.status = '実施中';
                     task._justCompleted = true; // Flag for fade-in animation
                     renderBoard();
-                    google.script.run.withFailureHandler(handleError).saveTask(task);
+                    google.script.run
+                        .withSuccessHandler(() => refreshData(true))
+                        .withFailureHandler(handleError)
+                        .saveTask(task);
                 }, 700); // Wait for animation
             } else {
                 // Check: Move to Done
@@ -168,7 +182,10 @@
                     task.status = '完了';
                     task._justCompleted = true; // Flag for fade-in animation
                     renderBoard();
-                    google.script.run.withFailureHandler(handleError).saveTask(task);
+                    google.script.run
+                        .withSuccessHandler(() => refreshData(true))
+                        .withFailureHandler(handleError)
+                        .saveTask(task);
                 }, 700); // Wait for animation
             }
         };
@@ -185,7 +202,11 @@
                 group: 'kanban',
                 animation: 150,
                 ghostClass: 'dragging',
+                onStart: () => {
+                    document.body.classList.add('sorting-active');
+                },
                 onEnd: (evt) => {
+                    document.body.classList.remove('sorting-active');
                     if (evt.from === evt.to && evt.oldIndex === evt.newIndex) return;
                     updateAfterDrag();
                 }
@@ -218,6 +239,7 @@
         renderBoard();
 
         google.script.run
+            .withSuccessHandler(() => refreshData(true))
             .withFailureHandler(handleError)
             .updateOrderAndStatus(updates);
     }

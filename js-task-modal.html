@@ -1,3 +1,11 @@
+<!--
+  MyTask
+  https://github.com/blueshooterX/MyTask
+  
+  Copyright (c) 2026 blueshooterX
+  Licensed under the MIT License.
+-->
+
 <script>
     /**
      * Task Modal Logic
@@ -12,6 +20,13 @@
 
         document.querySelector('.close-modal').onclick = closeModal;
         document.querySelector('.cancel-btn').onclick = closeModal;
+
+        // Close on ESC key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('show')) {
+                closeModal();
+            }
+        });
 
         document.getElementById('taskForm').onsubmit = (e) => {
             e.preventDefault();
@@ -111,13 +126,44 @@
             return;
         }
 
-        showLoading('loading-overlay', true);
+        // --- Optimistic Update ---
+        const originalTasks = JSON.parse(JSON.stringify(state.tasks));
+
+        if (id) {
+            // Edit mode: Update existing task in state
+            const index = state.tasks.findIndex(t => t.id == id);
+            if (index !== -1) {
+                state.tasks[index] = { ...state.tasks[index], ...task };
+            }
+        } else {
+            // New mode: Prepend temporary task
+            const tempTask = {
+                ...task,
+                id: 'temp_' + Date.now(),
+                no: 0 // Will be corrected by refresh
+            };
+            state.tasks.unshift(tempTask);
+        }
+
+        renderBoard();
+        document.getElementById('taskModal').classList.remove('show');
+
+        // Background save
         google.script.run
-            .withSuccessHandler(() => {
-                document.getElementById('taskModal').classList.remove('show');
-                refreshData();
+            .withSuccessHandler((res) => {
+                // If it was a new task, we need the real ID for subsequent operations
+                if (!id && res.id) {
+                    const t = state.tasks.find(t => t.id.toString().startsWith('temp_'));
+                    if (t) t.id = res.id;
+                }
+                refreshData(true); // Silent sync
             })
-            .withFailureHandler(handleError)
+            .withFailureHandler(err => {
+                // Rollback on failure
+                state.tasks = originalTasks;
+                renderBoard();
+                handleError(err);
+            })
             .saveTask(task);
     }
 

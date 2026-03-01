@@ -35,12 +35,20 @@ const CONFIG = {
             '低': 'low'
         }
     },
-    VERSION: 'v1.3.0'
+    VERSION: 'v1.3.1'
 };
 
 /* --- END AppConfig.js.sample --- */
 
 /* --- START RichTextLib.js --- */
+/**
+ * MyTask
+ * https://github.com/blueshooterX/MyTask
+ * 
+ * Copyright (c) 2026 blueshooterX
+ * Licensed under the MIT License.
+ */
+
 /**
  * RichText Conversion Library
  * 
@@ -232,6 +240,14 @@ function parseToHex(color) {
 /* --- END RichTextLib.js --- */
 
 /* --- START TaskService.js --- */
+/**
+ * MyTask
+ * https://github.com/blueshooterX/MyTask
+ * 
+ * Copyright (c) 2026 blueshooterX
+ * Licensed under the MIT License.
+ */
+
 /**
  * Task Service
  * Handles data operations for Tasks.
@@ -507,6 +523,14 @@ function getNextNo(data, status) {
 /**
  * Initialization & HTML Delivery
  */
+/**
+ * MyTask
+ * https://github.com/blueshooterX/MyTask
+ * 
+ * Copyright (c) 2026 blueshooterX
+ * Licensed under the MIT License.
+ */
+
 function doGet() {
   if (!checkAccess()) {
     return HtmlService.createHtmlOutput('Access Denied. You are not authorized to access this application.');

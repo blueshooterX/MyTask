@@ -1,3 +1,11 @@
+<!--
+  MyTask
+  https://github.com/blueshooterX/MyTask
+  
+  Copyright (c) 2026 blueshooterX
+  Licensed under the MIT License.
+-->
+
 <style>
     :root {
         --primary: #4F46E5;
@@ -597,6 +605,14 @@
         100% {
             transform: rotate(360deg);
         }
+    }
+
+    /* Prevent text selection during drag and drop */
+    body.sorting-active {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
     }
 
     @media (max-width: 768px) {

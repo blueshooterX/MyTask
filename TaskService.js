@@ -1,4 +1,12 @@
 /**
+ * MyTask
+ * https://github.com/blueshooterX/MyTask
+ * 
+ * Copyright (c) 2026 blueshooterX
+ * Licensed under the MIT License.
+ */
+
+/**
  * Task Service
  * Handles data operations for Tasks.
  */

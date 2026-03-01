@@ -31,5 +31,5 @@ const CONFIG = {
             '低': 'low'
         }
     },
-    VERSION: 'v1.3.0'
+    VERSION: 'v1.3.1'
 };

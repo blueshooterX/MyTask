@@ -1,3 +1,11 @@
+/**
+ * MyTask
+ * https://github.com/blueshooterX/MyTask
+ * 
+ * Copyright (c) 2026 blueshooterX
+ * Licensed under the MIT License.
+ */
+
 const fs = require('fs');
 const path = require('path');
 
@@ -54,7 +62,7 @@ function bundleServer() {
 function bundleClient() {
     console.log('[Info] Bundling client-side files...');
     const mainPath = path.join(__dirname, CLIENT_MAIN);
-    
+
     if (!fs.existsSync(mainPath)) {
         throw new Error(`Main client file not found: ${CLIENT_MAIN}`);
     }

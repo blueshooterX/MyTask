@@ -1,3 +1,11 @@
+<!--
+  MyTask
+  https://github.com/blueshooterX/MyTask
+  
+  Copyright (c) 2026 blueshooterX
+  Licensed under the MIT License.
+-->
+
 <!DOCTYPE html>
 <html>
 
@@ -11,6 +19,14 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
 <!-- --- START css.html --- -->
+<!--
+  MyTask
+  https://github.com/blueshooterX/MyTask
+  
+  Copyright (c) 2026 blueshooterX
+  Licensed under the MIT License.
+-->
+
 <style>
     :root {
         --primary: #4F46E5;
@@ -612,6 +628,14 @@
         }
     }
 
+    /* Prevent text selection during drag and drop */
+    body.sorting-active {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+
     @media (max-width: 768px) {
         header {
             flex-direction: column;
@@ -749,6 +773,14 @@
         
 <!-- --- START modal.html --- -->
 <!-- Task Editor Modal -->
+<!--
+  MyTask
+  https://github.com/blueshooterX/MyTask
+  
+  Copyright (c) 2026 blueshooterX
+  Licensed under the MIT License.
+-->
+
 <div id="taskModal" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-header">
@@ -1016,6 +1048,14 @@
     <!-- Scripts -->
     
 <!-- --- START js-ui-utils.html --- -->
+<!--
+  MyTask
+  https://github.com/blueshooterX/MyTask
+  
+  Copyright (c) 2026 blueshooterX
+  Licensed under the MIT License.
+-->
+
 <script>
     /**
      * UI Utilities (Reusable)
@@ -1094,6 +1134,14 @@
 
     
 <!-- --- START js-rich-text-editor.html --- -->
+<!--
+  MyTask
+  https://github.com/blueshooterX/MyTask
+  
+  Copyright (c) 2026 blueshooterX
+  Licensed under the MIT License.
+-->
+
 <script>
     /**
      * Rich Text Editor Component (Reusable)
@@ -1263,6 +1311,14 @@
 
     
 <!-- --- START js-kanban-view.html --- -->
+<!--
+  MyTask
+  https://github.com/blueshooterX/MyTask
+  
+  Copyright (c) 2026 blueshooterX
+  Licensed under the MIT License.
+-->
+
 <script>
     /**
      * Kanban View Logic
@@ -1405,7 +1461,10 @@
             e.target.innerText = nextLabel;
             e.target.className = `card-label ${task.label ? 'active' : 'inactive'}`;
 
-            google.script.run.withFailureHandler(handleError).saveTask(task);
+            google.script.run
+                .withSuccessHandler(() => refreshData(true))
+                .withFailureHandler(handleError)
+                .saveTask(task);
         };
 
         // Check Click
@@ -1421,7 +1480,10 @@
                     task.status = '実施中';
                     task._justCompleted = true; // Flag for fade-in animation
                     renderBoard();
-                    google.script.run.withFailureHandler(handleError).saveTask(task);
+                    google.script.run
+                        .withSuccessHandler(() => refreshData(true))
+                        .withFailureHandler(handleError)
+                        .saveTask(task);
                 }, 700); // Wait for animation
             } else {
                 // Check: Move to Done
@@ -1433,7 +1495,10 @@
                     task.status = '完了';
                     task._justCompleted = true; // Flag for fade-in animation
                     renderBoard();
-                    google.script.run.withFailureHandler(handleError).saveTask(task);
+                    google.script.run
+                        .withSuccessHandler(() => refreshData(true))
+                        .withFailureHandler(handleError)
+                        .saveTask(task);
                 }, 700); // Wait for animation
             }
         };
@@ -1450,7 +1515,11 @@
                 group: 'kanban',
                 animation: 150,
                 ghostClass: 'dragging',
+                onStart: () => {
+                    document.body.classList.add('sorting-active');
+                },
                 onEnd: (evt) => {
+                    document.body.classList.remove('sorting-active');
                     if (evt.from === evt.to && evt.oldIndex === evt.newIndex) return;
                     updateAfterDrag();
                 }
@@ -1483,6 +1552,7 @@
         renderBoard();
 
         google.script.run
+            .withSuccessHandler(() => refreshData(true))
             .withFailureHandler(handleError)
             .updateOrderAndStatus(updates);
     }
@@ -1503,6 +1573,14 @@
 
     
 <!-- --- START js-task-modal.html --- -->
+<!--
+  MyTask
+  https://github.com/blueshooterX/MyTask
+  
+  Copyright (c) 2026 blueshooterX
+  Licensed under the MIT License.
+-->
+
 <script>
     /**
      * Task Modal Logic
@@ -1517,6 +1595,13 @@
 
         document.querySelector('.close-modal').onclick = closeModal;
         document.querySelector('.cancel-btn').onclick = closeModal;
+
+        // Close on ESC key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('show')) {
+                closeModal();
+            }
+        });
 
         document.getElementById('taskForm').onsubmit = (e) => {
             e.preventDefault();
@@ -1616,13 +1701,44 @@
             return;
         }
 
-        showLoading('loading-overlay', true);
+        // --- Optimistic Update ---
+        const originalTasks = JSON.parse(JSON.stringify(state.tasks));
+
+        if (id) {
+            // Edit mode: Update existing task in state
+            const index = state.tasks.findIndex(t => t.id == id);
+            if (index !== -1) {
+                state.tasks[index] = { ...state.tasks[index], ...task };
+            }
+        } else {
+            // New mode: Prepend temporary task
+            const tempTask = {
+                ...task,
+                id: 'temp_' + Date.now(),
+                no: 0 // Will be corrected by refresh
+            };
+            state.tasks.unshift(tempTask);
+        }
+
+        renderBoard();
+        document.getElementById('taskModal').classList.remove('show');
+
+        // Background save
         google.script.run
-            .withSuccessHandler(() => {
-                document.getElementById('taskModal').classList.remove('show');
-                refreshData();
+            .withSuccessHandler((res) => {
+                // If it was a new task, we need the real ID for subsequent operations
+                if (!id && res.id) {
+                    const t = state.tasks.find(t => t.id.toString().startsWith('temp_'));
+                    if (t) t.id = res.id;
+                }
+                refreshData(true); // Silent sync
             })
-            .withFailureHandler(handleError)
+            .withFailureHandler(err => {
+                // Rollback on failure
+                state.tasks = originalTasks;
+                renderBoard();
+                handleError(err);
+            })
             .saveTask(task);
     }
 
@@ -1642,6 +1758,14 @@
 
     
 <!-- --- START js-main.html --- -->
+<!--
+  MyTask
+  https://github.com/blueshooterX/MyTask
+  
+  Copyright (c) 2026 blueshooterX
+  Licensed under the MIT License.
+-->
+
 <script>
     /**
      * Main Client Controller
@@ -1663,10 +1787,9 @@
 
     // Initial Load
     window.onload = () => {
-        showLoading('loading-overlay', true);
         RichTextEditor.init('editor', 'editorToolbar');
         setupEventListeners();
-        setupSortable(); // Move potentially static setups here
+        setupSortable();
         setupResizers();
         setupTaskModal();
 
@@ -1675,10 +1798,7 @@
         updateDetailButton();
 
         // Load Data and Settings
-        google.script.run
-            .withSuccessHandler(initialize)
-            .withFailureHandler(handleError)
-            .getData();
+        refreshData(); // handles showLoading internally
 
         google.script.run.withSuccessHandler(settings => {
             state.mapping = settings.mapping;
@@ -1690,13 +1810,15 @@
         state.tasks = data;
         updateDataLists();
         renderBoard();
-        // Event listeners and static setups moved to window.onload to prevent duplication and state reset
-        showLoading('loading-overlay', false);
     }
 
-    function refreshData() {
+    function refreshData(silent = false) {
+        if (!silent) showLoading('loading-overlay', true);
         google.script.run
-            .withSuccessHandler(initialize)
+            .withSuccessHandler(data => {
+                initialize(data);
+                showLoading('loading-overlay', false);
+            })
             .withFailureHandler(handleError)
             .getData();
     }
